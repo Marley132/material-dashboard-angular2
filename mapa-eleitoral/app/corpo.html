@@ -1,0 +1,54 @@
+<header class="topo">
+  <div class="marca"><span>Juazeiro · BA</span><h1>Mapa Eleitoral</h1></div>
+  <div class="seletor">
+    <label for="eleicao">Eleição</label>
+    <select id="eleicao">
+      <optgroup label="2026 · Geral (1º turno)">
+        <option value="2026_PRESIDENTE_1">Presidente 2026 · 1º turno</option>
+        <option value="2026_GOVERNADOR_1">Governador 2026 · 1º turno</option>
+        <option value="2026_SENADOR">Senador 2026</option>
+        <option value="2026_DEPUTADO_FEDERAL">Deputado Federal 2026</option>
+        <option value="2026_DEPUTADO_ESTADUAL">Deputado Estadual 2026</option>
+      </optgroup>
+      <optgroup label="2024 · Municipal">
+        <option value="2024_PREFEITO" selected>Prefeito 2024</option>
+        <option value="2024_VEREADOR">Vereador 2024</option>
+      </optgroup>
+      <optgroup label="2022 · Geral">
+        <option value="2022_PRESIDENTE_2">Presidente 2022 · 2º turno</option>
+        <option value="2022_PRESIDENTE_1">Presidente 2022 · 1º turno</option>
+        <option value="2022_GOVERNADOR_2">Governador 2022 · 2º turno</option>
+        <option value="2022_GOVERNADOR_1">Governador 2022 · 1º turno</option>
+        <option value="2022_SENADOR">Senador 2022</option>
+        <option value="2022_DEPUTADO_FEDERAL">Deputado Federal 2022</option>
+        <option value="2022_DEPUTADO_ESTADUAL">Deputado Estadual 2022</option>
+      </optgroup>
+      <optgroup label="2020 · Municipal">
+        <option value="2020_PREFEITO">Prefeito 2020</option>
+        <option value="2020_VEREADOR">Vereador 2020</option>
+      </optgroup>
+    </select>
+  </div>
+</header>
+<main class="app">
+  <div id="map" role="region" aria-label="Mapa de Juazeiro"></div>
+  <button class="chip-inicio" id="chip-inicio" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Ver Juazeiro inteira</button>
+  <div class="legenda" id="legenda">
+    <button class="leg-botao" id="leg-botao" aria-expanded="false" aria-controls="leg-conteudo"><span class="amostras" id="leg-amostras"></span><span class="leg-rotulo">Legenda</span><span class="leg-seta" aria-hidden="true"></span><span class="leg-fechar">Fechar ✕</span></button>
+    <div class="leg-conteudo" id="leg-conteudo">
+      <label for="colorir">Colorir o mapa por</label>
+      <select id="colorir"><option value="vencedor">Quem venceu</option></select>
+      <div id="leg-itens"></div>
+      <p class="leg-dica" id="leg-dica"></p>
+      <div class="camadas">
+        <button data-camada="camadaBairros" aria-pressed="true">Bairros</button>
+        <button data-camada="camadaLocais" aria-pressed="true">Locais de votação</button>
+      </div>
+    </div>
+  </div>
+  <aside class="painel" id="painel" aria-labelledby="titulo-painel">
+    <div class="alca" id="alca" role="button" aria-label="Expandir ou recolher o painel"></div>
+    <div class="painel-cab" id="painel-cab"><p class="sobre">Juazeiro · Bahia</p><h2 id="titulo-painel">Mapa Eleitoral</h2></div>
+    <div class="painel-corpo" id="painel-corpo"><p class="carregando">Carregando resultados do TSE…</p></div>
+  </aside>
+</main>

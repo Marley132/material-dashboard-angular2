@@ -1,0 +1,2054 @@
+<meta charset="utf-8">
+<title>Mapa Eleitoral de Juazeiro</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Resultados eleitorais de Juazeiro-BA por bairro, local de votação e urna.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+/* Leaflet 1.9.4 */
+/* required styles */
+
+.leaflet-pane,
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-tile-container,
+.leaflet-pane > svg,
+.leaflet-pane > canvas,
+.leaflet-zoom-box,
+.leaflet-image-layer,
+.leaflet-layer {
+	position: absolute;
+	left: 0;
+	top: 0;
+	}
+.leaflet-container {
+	overflow: hidden;
+	}
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
+	-webkit-user-select: none;
+	   -moz-user-select: none;
+	        user-select: none;
+	  -webkit-user-drag: none;
+	}
+/* Prevents IE11 from highlighting tiles in blue */
+.leaflet-tile::selection {
+	background: transparent;
+}
+/* Safari renders non-retina tile on retina better with this, but Chrome is worse */
+.leaflet-safari .leaflet-tile {
+	image-rendering: -webkit-optimize-contrast;
+	}
+/* hack that prevents hw layers "stretching" when loading new tiles */
+.leaflet-safari .leaflet-tile-container {
+	width: 1600px;
+	height: 1600px;
+	-webkit-transform-origin: 0 0;
+	}
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
+	display: block;
+	}
+/* .leaflet-container svg: reset svg max-width decleration shipped in Joomla! (joomla.org) 3.x */
+/* .leaflet-container img: map is broken in FF if you have max-width: 100% on tiles */
+.leaflet-container .leaflet-overlay-pane svg {
+	max-width: none !important;
+	max-height: none !important;
+	}
+.leaflet-container .leaflet-marker-pane img,
+.leaflet-container .leaflet-shadow-pane img,
+.leaflet-container .leaflet-tile-pane img,
+.leaflet-container img.leaflet-image-layer,
+.leaflet-container .leaflet-tile {
+	max-width: none !important;
+	max-height: none !important;
+	width: auto;
+	padding: 0;
+	}
+
+.leaflet-container img.leaflet-tile {
+	/* See: https://bugs.chromium.org/p/chromium/issues/detail?id=600120 */
+	mix-blend-mode: plus-lighter;
+}
+
+.leaflet-container.leaflet-touch-zoom {
+	-ms-touch-action: pan-x pan-y;
+	touch-action: pan-x pan-y;
+	}
+.leaflet-container.leaflet-touch-drag {
+	-ms-touch-action: pinch-zoom;
+	/* Fallback for FF which doesn't support pinch-zoom */
+	touch-action: none;
+	touch-action: pinch-zoom;
+}
+.leaflet-container.leaflet-touch-drag.leaflet-touch-zoom {
+	-ms-touch-action: none;
+	touch-action: none;
+}
+.leaflet-container {
+	-webkit-tap-highlight-color: transparent;
+}
+.leaflet-container a {
+	-webkit-tap-highlight-color: rgba(51, 181, 229, 0.4);
+}
+.leaflet-tile {
+	filter: inherit;
+	visibility: hidden;
+	}
+.leaflet-tile-loaded {
+	visibility: inherit;
+	}
+.leaflet-zoom-box {
+	width: 0;
+	height: 0;
+	-moz-box-sizing: border-box;
+	     box-sizing: border-box;
+	z-index: 800;
+	}
+/* workaround for https://bugzilla.mozilla.org/show_bug.cgi?id=888319 */
+.leaflet-overlay-pane svg {
+	-moz-user-select: none;
+	}
+
+.leaflet-pane         { z-index: 400; }
+
+.leaflet-tile-pane    { z-index: 200; }
+.leaflet-overlay-pane { z-index: 400; }
+.leaflet-shadow-pane  { z-index: 500; }
+.leaflet-marker-pane  { z-index: 600; }
+.leaflet-tooltip-pane   { z-index: 650; }
+.leaflet-popup-pane   { z-index: 700; }
+
+.leaflet-map-pane canvas { z-index: 100; }
+.leaflet-map-pane svg    { z-index: 200; }
+
+.leaflet-vml-shape {
+	width: 1px;
+	height: 1px;
+	}
+.lvml {
+	behavior: url(#default#VML);
+	display: inline-block;
+	position: absolute;
+	}
+
+
+/* control positioning */
+
+.leaflet-control {
+	position: relative;
+	z-index: 800;
+	pointer-events: visiblePainted; /* IE 9-10 doesn't have auto */
+	pointer-events: auto;
+	}
+.leaflet-top,
+.leaflet-bottom {
+	position: absolute;
+	z-index: 1000;
+	pointer-events: none;
+	}
+.leaflet-top {
+	top: 0;
+	}
+.leaflet-right {
+	right: 0;
+	}
+.leaflet-bottom {
+	bottom: 0;
+	}
+.leaflet-left {
+	left: 0;
+	}
+.leaflet-control {
+	float: left;
+	clear: both;
+	}
+.leaflet-right .leaflet-control {
+	float: right;
+	}
+.leaflet-top .leaflet-control {
+	margin-top: 10px;
+	}
+.leaflet-bottom .leaflet-control {
+	margin-bottom: 10px;
+	}
+.leaflet-left .leaflet-control {
+	margin-left: 10px;
+	}
+.leaflet-right .leaflet-control {
+	margin-right: 10px;
+	}
+
+
+/* zoom and fade animations */
+
+.leaflet-fade-anim .leaflet-popup {
+	opacity: 0;
+	-webkit-transition: opacity 0.2s linear;
+	   -moz-transition: opacity 0.2s linear;
+	        transition: opacity 0.2s linear;
+	}
+.leaflet-fade-anim .leaflet-map-pane .leaflet-popup {
+	opacity: 1;
+	}
+.leaflet-zoom-animated {
+	-webkit-transform-origin: 0 0;
+	    -ms-transform-origin: 0 0;
+	        transform-origin: 0 0;
+	}
+svg.leaflet-zoom-animated {
+	will-change: transform;
+}
+
+.leaflet-zoom-anim .leaflet-zoom-animated {
+	-webkit-transition: -webkit-transform 0.25s cubic-bezier(0,0,0.25,1);
+	   -moz-transition:    -moz-transform 0.25s cubic-bezier(0,0,0.25,1);
+	        transition:         transform 0.25s cubic-bezier(0,0,0.25,1);
+	}
+.leaflet-zoom-anim .leaflet-tile,
+.leaflet-pan-anim .leaflet-tile {
+	-webkit-transition: none;
+	   -moz-transition: none;
+	        transition: none;
+	}
+
+.leaflet-zoom-anim .leaflet-zoom-hide {
+	visibility: hidden;
+	}
+
+
+/* cursors */
+
+.leaflet-interactive {
+	cursor: pointer;
+	}
+.leaflet-grab {
+	cursor: -webkit-grab;
+	cursor:    -moz-grab;
+	cursor:         grab;
+	}
+.leaflet-crosshair,
+.leaflet-crosshair .leaflet-interactive {
+	cursor: crosshair;
+	}
+.leaflet-popup-pane,
+.leaflet-control {
+	cursor: auto;
+	}
+.leaflet-dragging .leaflet-grab,
+.leaflet-dragging .leaflet-grab .leaflet-interactive,
+.leaflet-dragging .leaflet-marker-draggable {
+	cursor: move;
+	cursor: -webkit-grabbing;
+	cursor:    -moz-grabbing;
+	cursor:         grabbing;
+	}
+
+/* marker & overlays interactivity */
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-image-layer,
+.leaflet-pane > svg path,
+.leaflet-tile-container {
+	pointer-events: none;
+	}
+
+.leaflet-marker-icon.leaflet-interactive,
+.leaflet-image-layer.leaflet-interactive,
+.leaflet-pane > svg path.leaflet-interactive,
+svg.leaflet-image-layer.leaflet-interactive path {
+	pointer-events: visiblePainted; /* IE 9-10 doesn't have auto */
+	pointer-events: auto;
+	}
+
+/* visual tweaks */
+
+.leaflet-container {
+	background: #ddd;
+	outline-offset: 1px;
+	}
+.leaflet-container a {
+	color: #0078A8;
+	}
+.leaflet-zoom-box {
+	border: 2px dotted #38f;
+	background: rgba(255,255,255,0.5);
+	}
+
+
+/* general typography */
+.leaflet-container {
+	font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-size: 12px;
+	font-size: 0.75rem;
+	line-height: 1.5;
+	}
+
+
+/* general toolbar styles */
+
+.leaflet-bar {
+	box-shadow: 0 1px 5px rgba(0,0,0,0.65);
+	border-radius: 4px;
+	}
+.leaflet-bar a {
+	background-color: #fff;
+	border-bottom: 1px solid #ccc;
+	width: 26px;
+	height: 26px;
+	line-height: 26px;
+	display: block;
+	text-align: center;
+	text-decoration: none;
+	color: black;
+	}
+.leaflet-bar a,
+.leaflet-control-layers-toggle {
+	background-position: 50% 50%;
+	background-repeat: no-repeat;
+	display: block;
+	}
+.leaflet-bar a:hover,
+.leaflet-bar a:focus {
+	background-color: #f4f4f4;
+	}
+.leaflet-bar a:first-child {
+	border-top-left-radius: 4px;
+	border-top-right-radius: 4px;
+	}
+.leaflet-bar a:last-child {
+	border-bottom-left-radius: 4px;
+	border-bottom-right-radius: 4px;
+	border-bottom: none;
+	}
+.leaflet-bar a.leaflet-disabled {
+	cursor: default;
+	background-color: #f4f4f4;
+	color: #bbb;
+	}
+
+.leaflet-touch .leaflet-bar a {
+	width: 30px;
+	height: 30px;
+	line-height: 30px;
+	}
+.leaflet-touch .leaflet-bar a:first-child {
+	border-top-left-radius: 2px;
+	border-top-right-radius: 2px;
+	}
+.leaflet-touch .leaflet-bar a:last-child {
+	border-bottom-left-radius: 2px;
+	border-bottom-right-radius: 2px;
+	}
+
+/* zoom control */
+
+.leaflet-control-zoom-in,
+.leaflet-control-zoom-out {
+	font: bold 18px 'Lucida Console', Monaco, monospace;
+	text-indent: 1px;
+	}
+
+.leaflet-touch .leaflet-control-zoom-in, .leaflet-touch .leaflet-control-zoom-out  {
+	font-size: 22px;
+	}
+
+
+/* layers control */
+
+.leaflet-control-layers {
+	box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+	background: #fff;
+	border-radius: 5px;
+	}
+.leaflet-control-layers-toggle {
+	background-image: url(images/layers.png);
+	width: 36px;
+	height: 36px;
+	}
+.leaflet-retina .leaflet-control-layers-toggle {
+	background-image: url(images/layers-2x.png);
+	background-size: 26px 26px;
+	}
+.leaflet-touch .leaflet-control-layers-toggle {
+	width: 44px;
+	height: 44px;
+	}
+.leaflet-control-layers .leaflet-control-layers-list,
+.leaflet-control-layers-expanded .leaflet-control-layers-toggle {
+	display: none;
+	}
+.leaflet-control-layers-expanded .leaflet-control-layers-list {
+	display: block;
+	position: relative;
+	}
+.leaflet-control-layers-expanded {
+	padding: 6px 10px 6px 6px;
+	color: #333;
+	background: #fff;
+	}
+.leaflet-control-layers-scrollbar {
+	overflow-y: scroll;
+	overflow-x: hidden;
+	padding-right: 5px;
+	}
+.leaflet-control-layers-selector {
+	margin-top: 2px;
+	position: relative;
+	top: 1px;
+	}
+.leaflet-control-layers label {
+	display: block;
+	font-size: 13px;
+	font-size: 1.08333em;
+	}
+.leaflet-control-layers-separator {
+	height: 0;
+	border-top: 1px solid #ddd;
+	margin: 5px -10px 5px -6px;
+	}
+
+/* Default icon URLs */
+.leaflet-default-icon-path { /* used only in path-guessing heuristic, see L.Icon.Default */
+	background-image: url(images/marker-icon.png);
+	}
+
+
+/* attribution and scale controls */
+
+.leaflet-container .leaflet-control-attribution {
+	background: #fff;
+	background: rgba(255, 255, 255, 0.8);
+	margin: 0;
+	}
+.leaflet-control-attribution,
+.leaflet-control-scale-line {
+	padding: 0 5px;
+	color: #333;
+	line-height: 1.4;
+	}
+.leaflet-control-attribution a {
+	text-decoration: none;
+	}
+.leaflet-control-attribution a:hover,
+.leaflet-control-attribution a:focus {
+	text-decoration: underline;
+	}
+.leaflet-attribution-flag {
+	display: inline !important;
+	vertical-align: baseline !important;
+	width: 1em;
+	height: 0.6669em;
+	}
+.leaflet-left .leaflet-control-scale {
+	margin-left: 5px;
+	}
+.leaflet-bottom .leaflet-control-scale {
+	margin-bottom: 5px;
+	}
+.leaflet-control-scale-line {
+	border: 2px solid #777;
+	border-top: none;
+	line-height: 1.1;
+	padding: 2px 5px 1px;
+	white-space: nowrap;
+	-moz-box-sizing: border-box;
+	     box-sizing: border-box;
+	background: rgba(255, 255, 255, 0.8);
+	text-shadow: 1px 1px #fff;
+	}
+.leaflet-control-scale-line:not(:first-child) {
+	border-top: 2px solid #777;
+	border-bottom: none;
+	margin-top: -2px;
+	}
+.leaflet-control-scale-line:not(:first-child):not(:last-child) {
+	border-bottom: 2px solid #777;
+	}
+
+.leaflet-touch .leaflet-control-attribution,
+.leaflet-touch .leaflet-control-layers,
+.leaflet-touch .leaflet-bar {
+	box-shadow: none;
+	}
+.leaflet-touch .leaflet-control-layers,
+.leaflet-touch .leaflet-bar {
+	border: 2px solid rgba(0,0,0,0.2);
+	background-clip: padding-box;
+	}
+
+
+/* popup */
+
+.leaflet-popup {
+	position: absolute;
+	text-align: center;
+	margin-bottom: 20px;
+	}
+.leaflet-popup-content-wrapper {
+	padding: 1px;
+	text-align: left;
+	border-radius: 12px;
+	}
+.leaflet-popup-content {
+	margin: 13px 24px 13px 20px;
+	line-height: 1.3;
+	font-size: 13px;
+	font-size: 1.08333em;
+	min-height: 1px;
+	}
+.leaflet-popup-content p {
+	margin: 17px 0;
+	margin: 1.3em 0;
+	}
+.leaflet-popup-tip-container {
+	width: 40px;
+	height: 20px;
+	position: absolute;
+	left: 50%;
+	margin-top: -1px;
+	margin-left: -20px;
+	overflow: hidden;
+	pointer-events: none;
+	}
+.leaflet-popup-tip {
+	width: 17px;
+	height: 17px;
+	padding: 1px;
+
+	margin: -10px auto 0;
+	pointer-events: auto;
+
+	-webkit-transform: rotate(45deg);
+	   -moz-transform: rotate(45deg);
+	    -ms-transform: rotate(45deg);
+	        transform: rotate(45deg);
+	}
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+	background: white;
+	color: #333;
+	box-shadow: 0 3px 14px rgba(0,0,0,0.4);
+	}
+.leaflet-container a.leaflet-popup-close-button {
+	position: absolute;
+	top: 0;
+	right: 0;
+	border: none;
+	text-align: center;
+	width: 24px;
+	height: 24px;
+	font: 16px/24px Tahoma, Verdana, sans-serif;
+	color: #757575;
+	text-decoration: none;
+	background: transparent;
+	}
+.leaflet-container a.leaflet-popup-close-button:hover,
+.leaflet-container a.leaflet-popup-close-button:focus {
+	color: #585858;
+	}
+.leaflet-popup-scrolled {
+	overflow: auto;
+	}
+
+.leaflet-oldie .leaflet-popup-content-wrapper {
+	-ms-zoom: 1;
+	}
+.leaflet-oldie .leaflet-popup-tip {
+	width: 24px;
+	margin: 0 auto;
+
+	-ms-filter: "progid:DXImageTransform.Microsoft.Matrix(M11=0.70710678, M12=0.70710678, M21=-0.70710678, M22=0.70710678)";
+	filter: progid:DXImageTransform.Microsoft.Matrix(M11=0.70710678, M12=0.70710678, M21=-0.70710678, M22=0.70710678);
+	}
+
+.leaflet-oldie .leaflet-control-zoom,
+.leaflet-oldie .leaflet-control-layers,
+.leaflet-oldie .leaflet-popup-content-wrapper,
+.leaflet-oldie .leaflet-popup-tip {
+	border: 1px solid #999;
+	}
+
+
+/* div icon */
+
+.leaflet-div-icon {
+	background: #fff;
+	border: 1px solid #666;
+	}
+
+
+/* Tooltip */
+/* Base styles for the element that has a tooltip */
+.leaflet-tooltip {
+	position: absolute;
+	padding: 6px;
+	background-color: #fff;
+	border: 1px solid #fff;
+	border-radius: 3px;
+	color: #222;
+	white-space: nowrap;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	pointer-events: none;
+	box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+	}
+.leaflet-tooltip.leaflet-interactive {
+	cursor: pointer;
+	pointer-events: auto;
+	}
+.leaflet-tooltip-top:before,
+.leaflet-tooltip-bottom:before,
+.leaflet-tooltip-left:before,
+.leaflet-tooltip-right:before {
+	position: absolute;
+	pointer-events: none;
+	border: 6px solid transparent;
+	background: transparent;
+	content: "";
+	}
+
+/* Directions */
+
+.leaflet-tooltip-bottom {
+	margin-top: 6px;
+}
+.leaflet-tooltip-top {
+	margin-top: -6px;
+}
+.leaflet-tooltip-bottom:before,
+.leaflet-tooltip-top:before {
+	left: 50%;
+	margin-left: -6px;
+	}
+.leaflet-tooltip-top:before {
+	bottom: 0;
+	margin-bottom: -12px;
+	border-top-color: #fff;
+	}
+.leaflet-tooltip-bottom:before {
+	top: 0;
+	margin-top: -12px;
+	margin-left: -6px;
+	border-bottom-color: #fff;
+	}
+.leaflet-tooltip-left {
+	margin-left: -6px;
+}
+.leaflet-tooltip-right {
+	margin-left: 6px;
+}
+.leaflet-tooltip-left:before,
+.leaflet-tooltip-right:before {
+	top: 50%;
+	margin-top: -6px;
+	}
+.leaflet-tooltip-left:before {
+	right: 0;
+	margin-right: -12px;
+	border-left-color: #fff;
+	}
+.leaflet-tooltip-right:before {
+	left: 0;
+	margin-left: -12px;
+	border-right-color: #fff;
+	}
+
+/* Printing */
+
+@media print {
+	/* Prevent printers from removing background-images of controls. */
+	.leaflet-control {
+		-webkit-print-color-adjust: exact;
+		print-color-adjust: exact;
+		}
+	}
+
+</style>
+<style>
+/* Layout: mapa ocupa a tela; painel de leitura à esquerda (desktop) ou folha deslizante (celular) */
+:root{
+  color-scheme:dark;
+  --bg:#0b0e13;--painel:#11151c;--painel-2:#171c25;--linha:#252b36;--linha-2:#323a48;
+  --texto:#e9edf3;--suave:#8f99ab;--fraco:#626c7e;
+  --acento:#f2b33d;--acento-fundo:rgba(242,179,61,.12);
+  --sobe:#3fbf7f;--desce:#f0645c;
+  --f-texto:'Barlow',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-titulo:'Barlow Condensed','Barlow',system-ui,sans-serif;
+  --raio:10px;--topo:56px;--larg-painel:410px;
+  --seguro-baixo:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--texto);font-family:var(--f-texto);font-size:14px;line-height:1.45;overflow:hidden;-webkit-font-smoothing:antialiased}
+button,select,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--acento);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+
+/* ── Topo ── */
+.topo{height:var(--topo);display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding-block:0;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  background:var(--painel);border-bottom:1px solid var(--linha);position:relative;z-index:1100}
+.marca{display:flex;align-items:baseline;gap:10px;min-width:0}
+.marca h1{font-family:var(--f-titulo);font-weight:700;font-size:21px;letter-spacing:.2px;margin:0;white-space:nowrap}
+.marca span{font-size:11px;font-weight:600;letter-spacing:1.4px;text-transform:uppercase;color:var(--acento);white-space:nowrap}
+.seletor{display:flex;align-items:center;gap:8px;min-width:0}
+.seletor label{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--suave)}
+.seletor select{background:var(--painel-2);border:1px solid var(--linha-2);border-radius:8px;padding:7px 30px 7px 11px;font-weight:600;font-size:14px;
+  appearance:none;-webkit-appearance:none;max-width:62vw;
+  background-image:linear-gradient(45deg,transparent 50%,var(--suave) 50%),linear-gradient(135deg,var(--suave) 50%,transparent 50%);
+  background-position:calc(100% - 15px) 52%,calc(100% - 10px) 52%;background-size:5px 5px;background-repeat:no-repeat}
+@media(max-width:560px){.marca span{display:none}.seletor label{display:none}.marca h1{font-size:19px}}
+
+/* ── Estrutura ── */
+.app{position:relative;height:calc(100% - var(--topo))}
+#map{position:absolute;inset:0;background:#14181f}
+@media(min-width:900px){#map{left:var(--larg-painel)}}
+
+/* ── Painel ── */
+.painel{position:absolute;z-index:1000;background:var(--painel);display:flex;flex-direction:column}
+@media(min-width:900px){
+  .painel{top:0;bottom:0;left:0;width:var(--larg-painel);border-right:1px solid var(--linha)}
+  .alca{display:none}
+}
+@media(max-width:899px){
+  .painel{left:0;right:0;bottom:0;height:calc(100% - 8px);border-radius:16px 16px 0 0;border-top:1px solid var(--linha-2);
+    box-shadow:0 -10px 30px rgba(0,0,0,.55);transform:translateY(calc(100% - var(--folha-visivel,150px)));
+    transition:transform .32s cubic-bezier(.3,.7,.2,1);will-change:transform}
+  .painel.arrastando{transition:none}
+  .alca{flex-shrink:0;height:22px;display:flex;align-items:center;justify-content:center;touch-action:none;cursor:grab}
+  .alca::before{content:"";width:40px;height:4px;border-radius:2px;background:var(--linha-2)}
+}
+.painel-cab{flex-shrink:0;padding:14px 16px 12px;border-bottom:1px solid var(--linha);touch-action:pan-y}
+@media(max-width:899px){.painel-cab{padding-top:0}}
+.trilha{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 8px}
+.trilha .voltar{display:inline-flex;align-items:center;gap:4px;min-height:36px;background:var(--painel-2)!important;border:1px solid var(--linha-2)!important;color:var(--texto)!important;border-radius:18px!important;padding:6px 14px 6px 8px!important;font-size:13px;font-weight:600;max-width:75%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.trilha .voltar svg{width:18px;height:18px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.trilha .ao-inicio{width:36px;height:36px;border-radius:50%!important;background:var(--painel-2)!important;border:1px solid var(--linha-2)!important;color:var(--suave)!important;font-size:14px;padding:0!important}
+.trilha button{background:none;border:none;color:var(--suave);padding:3px 6px;border-radius:6px;font-weight:600}
+.trilha button:hover{color:var(--texto);background:var(--painel-2)}
+.trilha i{color:var(--fraco);font-style:normal}
+.sobre{font-size:11px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--acento);margin:0 0 2px}
+.painel-cab h2{font-family:var(--f-titulo);font-size:26px;line-height:1.1;font-weight:700;margin:0;text-wrap:balance}
+.painel-cab .sub{margin:4px 0 0;color:var(--suave);font-size:13px}
+.painel.buscando .painel-cab{display:none}
+.painel.buscando .painel-corpo{padding-bottom:100vh}
+.painel-corpo{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:4px 16px calc(28px + var(--seguro-baixo))}
+
+/* ── Blocos ── */
+.bloco{padding:16px 0;border-bottom:1px solid var(--linha)}
+.bloco:last-child{border-bottom:none}
+.bloco-tit{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 10px;margin:0 0 12px;
+  font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--suave)}
+.bloco-tit small{font-size:11px;font-weight:500;letter-spacing:0;text-transform:none;color:var(--fraco)}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.kpi{background:var(--painel-2);border-radius:var(--raio);padding:10px 12px;min-width:0}
+.kpi span{display:block;font-size:11px;color:var(--suave);margin-bottom:2px}
+.kpi b{font-family:var(--f-titulo);font-size:23px;font-weight:600;line-height:1.1;font-variant-numeric:tabular-nums}
+.kpi em{font-style:normal;font-size:12px;color:var(--suave);margin-left:4px;font-variant-numeric:tabular-nums}
+.kpi .medidor{height:3px;background:var(--linha-2);border-radius:2px;margin-top:7px;overflow:hidden}
+.kpi .medidor i{display:block;height:100%;background:var(--texto);opacity:.7}
+
+/* Linhas de candidato */
+.cands{display:flex;flex-direction:column;gap:4px}
+.cand{display:grid;grid-template-columns:10px 1fr auto;column-gap:10px;row-gap:5px;align-items:center;width:100%;text-align:left;
+  background:none;border:1px solid transparent;border-radius:var(--raio);padding:8px 8px}
+button.cand:hover{background:var(--painel-2)}
+.cand.ativo{background:var(--painel-2);border-color:var(--linha-2)}
+.cand .cor{width:10px;height:10px;border-radius:3px}
+.cand .nome{min-width:0;font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cand .nome small{font-weight:500;color:var(--suave);font-size:12px;margin-left:5px}
+.cand .pct{font-family:var(--f-titulo);font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;text-align:right;line-height:1}
+.cand .barra{grid-column:2/4;height:6px;background:var(--linha);border-radius:3px;overflow:hidden}
+.cand .barra i{display:block;height:100%;border-radius:3px}
+.cand .det{grid-column:2/4;display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--suave);margin-top:-2px}
+.dif-sobe{color:var(--sobe)}.dif-desce{color:var(--desce)}
+.selo{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;padding:2px 6px;border-radius:4px;
+  background:var(--acento-fundo);color:var(--acento);margin-left:6px;vertical-align:1px}
+.selo.neutro{background:var(--painel-2);color:var(--suave)}
+
+/* Lista de bairros/locais */
+.ordem{display:flex;gap:2px;background:var(--bg);border-radius:8px;padding:2px}
+.ordem button{white-space:nowrap;background:none;border:none;font-size:11px;font-weight:600;color:var(--suave);padding:4px 8px;border-radius:6px;letter-spacing:.2px;text-transform:none}
+.ordem button[aria-pressed="true"]{background:var(--painel-2);color:var(--texto)}
+.itens{display:flex;flex-direction:column;gap:2px}
+.item{display:grid;grid-template-columns:1fr auto;gap:5px 12px;align-items:baseline;width:100%;text-align:left;background:none;border:none;border-radius:var(--raio);padding:9px 8px}
+.item:hover{background:var(--painel-2)}
+.item .t{font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item .t small{font-weight:500;color:var(--fraco);font-size:11px;margin-left:6px;text-transform:uppercase;letter-spacing:.6px}
+.item .v{font-size:12px;color:var(--suave);font-variant-numeric:tabular-nums;white-space:nowrap}
+.item .v b{color:var(--texto);font-weight:600}
+.empilhada{grid-column:1/3;display:flex;height:6px;border-radius:3px;overflow:hidden;background:var(--linha)}
+.empilhada i{display:block;height:100%}
+.vazio{color:var(--suave);font-size:13px;line-height:1.55;background:var(--painel-2);border-radius:var(--raio);padding:12px 14px}
+.nota{font-size:12px;color:var(--fraco);line-height:1.55}
+.nota b{color:var(--suave);font-weight:600}
+details.mais summary{cursor:pointer;color:var(--suave);font-size:12px;font-weight:600;padding:6px 8px;list-style:none}
+details.mais summary::-webkit-details-marker{display:none}
+details.mais p{margin:4px 8px 0;font-size:12px;color:var(--fraco);line-height:1.6}
+.ver-mais{display:block;width:100%;background:none;border:1px dashed var(--linha-2);border-radius:var(--raio);color:var(--suave);font-weight:600;font-size:12px;padding:9px;margin-top:6px}
+.ver-mais:hover{color:var(--texto);border-color:var(--suave)}
+
+/* Busca de candidato */
+.busca{position:relative}
+.busca input{width:100%;background:var(--bg);border:1px solid var(--linha-2);border-radius:var(--raio);padding:11px 12px 11px 36px;font-size:15px}
+.busca input::placeholder{color:var(--fraco)}
+.busca svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;stroke:var(--suave)}
+.sugestoes{list-style:none;margin:6px 0 0;padding:4px;background:var(--bg);border:1px solid var(--linha-2);border-radius:var(--raio);max-height:280px;overflow-y:auto}
+.sugestoes[hidden]{display:none}
+.sugestoes button{display:flex;justify-content:space-between;gap:10px;width:100%;background:none;border:none;text-align:left;padding:9px 10px;border-radius:7px}
+.sugestoes button:hover,.sugestoes button:focus-visible{background:var(--painel-2)}
+.sugestoes small{color:var(--suave);font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* Ficha do candidato */
+.ficha{background:linear-gradient(180deg,var(--acento-fundo),transparent 85%);border:1px solid rgba(242,179,61,.28);border-radius:12px;padding:14px}
+.ficha-topo{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.ficha h3{font-family:var(--f-titulo);font-size:24px;line-height:1.1;margin:0}
+.ficha p{margin:3px 0 0;color:var(--suave);font-size:12px}
+.ficha .fechar{background:var(--bg);border:1px solid var(--linha-2);border-radius:8px;padding:5px 10px;font-size:12px;font-weight:600;color:var(--suave)}
+.ficha .kpis{margin-top:12px}
+.ficha .kpi{background:rgba(11,14,19,.55)}
+
+/* Boletins de urna */
+.urna{border:1px solid var(--linha);border-radius:var(--raio);margin-bottom:6px;background:var(--bg)}
+.urna summary{list-style:none;display:grid;grid-template-columns:auto 1fr auto;gap:2px 10px;align-items:center;padding:10px 12px;cursor:pointer}
+.urna summary::-webkit-details-marker{display:none}
+.urna summary::after{content:"";width:7px;height:7px;border-right:2px solid var(--suave);border-bottom:2px solid var(--suave);transform:rotate(45deg);grid-row:1/3;grid-column:3;margin-left:8px;transition:transform .2s}
+.urna[open] summary::after{transform:rotate(225deg)}
+.urna .sec{font-family:var(--f-titulo);font-weight:700;font-size:17px}
+.urna .sub{grid-column:1/3;font-size:12px;color:var(--suave)}
+.urna .res{grid-column:2;grid-row:1;justify-self:end;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.urna[open] summary{border-bottom:1px solid var(--linha)}
+.bu{padding:12px}
+.bu-cab{display:flex;justify-content:space-between;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--fraco);font-weight:700;margin-bottom:10px}
+.bu-grade{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px}
+.bu-grade div{background:var(--painel-2);border-radius:7px;padding:7px 8px}
+.bu-grade span{display:block;font-size:10px;color:var(--suave)}
+.bu-grade b{font-variant-numeric:tabular-nums;font-size:15px}
+.bu-linha{display:grid;grid-template-columns:34px 1fr auto;gap:2px 8px;align-items:baseline;padding:4px 2px;font-size:13px;border-top:1px solid var(--linha)}
+.bu-linha:first-of-type{border-top:none}
+.bu-linha .n{font-size:11px;color:var(--fraco);font-variant-numeric:tabular-nums}
+.bu-linha .q{font-weight:700;font-variant-numeric:tabular-nums}
+.bu-linha.dest{background:var(--acento-fundo);border-radius:6px}
+.bu-linha .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bu-linha .nm small{color:var(--suave);font-size:11px;margin-left:4px}
+.bu-nota{font-size:12px;color:var(--acento);margin:0 0 10px}
+
+/* ── Mapa: legenda e controles ── */
+.legenda{position:absolute;z-index:900;top:12px;right:12px;width:250px;background:rgba(17,21,28,.94);backdrop-filter:blur(6px);
+  border:1px solid var(--linha-2);border-radius:12px;padding:12px;box-shadow:0 8px 24px rgba(0,0,0,.45)}
+@media(max-width:899px){.legenda{top:10px;right:max(10px,env(safe-area-inset-right,0px));width:auto;max-width:calc(100% - 20px);padding:0}}
+.leg-botao{display:none}
+@media(max-width:899px){
+  .leg-botao{display:flex;align-items:center;gap:8px;background:none;border:none;padding:9px 12px;font-weight:600;font-size:13px}
+  .leg-botao .amostras{display:flex;gap:3px}
+  .leg-botao .amostras i{width:10px;height:10px;border-radius:3px}
+  .legenda .leg-conteudo{display:none;padding:0 12px 12px;width:250px;max-width:calc(100vw - 40px)}
+  .legenda.aberta .leg-conteudo{display:block}
+}
+.leg-conteudo label{display:block;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--suave);margin-bottom:6px}
+.leg-conteudo select{width:100%;background:var(--painel-2);border:1px solid var(--linha-2);border-radius:8px;padding:7px 10px;font-size:13px;font-weight:600;margin-bottom:10px}
+.leg-itens{display:flex;flex-direction:column;gap:5px;font-size:12px}
+.leg-itens div{display:flex;align-items:center;gap:8px}
+.leg-itens i{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+.leg-grad{height:8px;border-radius:4px;margin:2px 0 4px}
+.leg-escala{display:flex;justify-content:space-between;font-size:11px;color:var(--suave);font-variant-numeric:tabular-nums}
+.leg-dica{font-size:11px;color:var(--fraco);margin:8px 0 0;line-height:1.45}
+.camadas{display:flex;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid var(--linha)}
+.camadas button{flex:1;background:var(--painel-2);border:1px solid var(--linha-2);border-radius:7px;padding:6px 4px;font-size:12px;font-weight:600;color:var(--suave)}
+.camadas button[aria-pressed="true"]{color:var(--texto);border-color:var(--suave)}
+.carregando{display:flex;align-items:center;gap:10px;color:var(--suave);padding:24px 0}
+.carregando::before{content:"";width:16px;height:16px;border-radius:50%;border:2px solid var(--linha-2);border-top-color:var(--acento);animation:gira .8s linear infinite}
+@keyframes gira{to{transform:rotate(360deg)}}
+
+/* Botão flutuante para voltar ao mapa inteiro */
+.chip-inicio{position:absolute;z-index:900;top:12px;left:max(12px,env(safe-area-inset-left,0px));display:flex;align-items:center;gap:6px;
+  background:rgba(17,21,28,.94);backdrop-filter:blur(6px);border:1px solid var(--linha-2);border-radius:20px;padding:8px 14px 8px 10px;
+  font-weight:600;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.45)}
+.chip-inicio[hidden]{display:none}
+.chip-inicio svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+@media(min-width:900px){.chip-inicio{left:calc(var(--larg-painel) + 12px)}}
+
+/* Leaflet */
+.leaflet-container{background:#14181f;font-family:var(--f-texto);-webkit-tap-highlight-color:transparent}
+.leaflet-container .leaflet-interactive:focus,.leaflet-container path:focus{outline:none}
+.leaflet-control-attribution{background:rgba(11,14,19,.7)!important;color:var(--fraco)!important;font-size:10px!important}
+.leaflet-control-attribution a{color:var(--suave)!important}
+.leaflet-bar a{background:var(--painel)!important;color:var(--texto)!important;border-color:var(--linha-2)!important}
+.leaflet-bar{border:1px solid var(--linha-2)!important;box-shadow:0 4px 14px rgba(0,0,0,.4)!important}
+.dica-mapa{background:var(--painel)!important;border:1px solid var(--linha-2)!important;color:var(--texto)!important;border-radius:9px!important;
+  box-shadow:0 8px 20px rgba(0,0,0,.5)!important;font-family:var(--f-texto);font-size:12px;padding:8px 10px!important;line-height:1.45}
+.dica-mapa::before{display:none}
+.dica-mapa b{font-weight:700}
+.dica-mapa .x{color:var(--suave)}
+.rotulo span{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;pointer-events:none;font-family:var(--f-texto);
+  text-shadow:0 0 3px #0b0e13,0 0 3px #0b0e13,0 0 8px #0b0e13}
+.rotulo-bairro span{font-size:11px;font-weight:600;color:#c3cad6}
+.rotulo-distrito span{font-size:12px;font-weight:700;color:#d6dce5;letter-spacing:.8px;text-transform:uppercase}
+.rotulo-cidade span{font-family:var(--f-titulo);font-size:16px;font-weight:700;color:#dfe4ea;letter-spacing:2.5px;text-transform:uppercase}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* ── Abas Resultados / Comparar ── */
+.abas{display:flex;gap:2px;background:var(--bg);border-radius:10px;padding:3px;margin:0 0 12px}
+.abas button{flex:1;background:none;border:none;border-radius:8px;padding:8px 6px;font-weight:600;font-size:13px;color:var(--suave)}
+.abas button[aria-selected="true"]{background:var(--painel-2);color:var(--texto);box-shadow:inset 0 0 0 1px var(--linha-2)}
+
+/* ── Comparar ── */
+.slots{display:grid;gap:10px}
+.slot{border:1px solid var(--linha-2);border-left:3px solid var(--slot);border-radius:var(--raio);padding:10px 12px;background:var(--painel-2)}
+.slot-tit{display:flex;align-items:center;gap:6px;margin:0 0 8px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--slot)}
+.slot-tit i{width:8px;height:8px;border-radius:50%;background:var(--slot)}
+.slot select{width:100%;background:var(--bg);border:1px solid var(--linha-2);border-radius:8px;padding:8px 10px;font-size:13px;font-weight:600;margin-bottom:8px}
+.slot-cand{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.slot-cand b{display:block;font-family:var(--f-titulo);font-size:20px;line-height:1.15}
+.slot-cand small{color:var(--suave);font-size:12px}
+.slot-trocar{background:var(--bg);border:1px solid var(--linha-2);border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;color:var(--suave);flex-shrink:0}
+.slot .busca input{font-size:15px}
+.metricas button{font-size:11px}
+.duelo{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.duelo div{background:var(--painel-2);border-radius:var(--raio);padding:10px 12px;border-top:3px solid var(--slot);min-width:0}
+.duelo span{display:block;font-size:12px;font-weight:600;color:var(--slot);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.duelo span small{display:block;color:var(--fraco);font-weight:500;font-size:11px}
+.duelo b{font-family:var(--f-titulo);font-size:28px;line-height:1.1;font-variant-numeric:tabular-nums}
+.duelo em{display:block;font-style:normal;font-size:12px;color:var(--suave);font-variant-numeric:tabular-nums}
+.veredito{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+.veredito div{background:var(--bg);border:1px solid var(--linha);border-radius:8px;padding:7px 9px;min-width:0}
+.veredito div:first-child{border-color:var(--t)}
+.veredito span{display:block;font-size:10px;color:var(--suave);text-transform:uppercase;letter-spacing:.6px;font-weight:700}
+.veredito b{font-family:var(--f-titulo);font-size:18px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.veredito div:first-child b{color:var(--t)}
+.dispersao{width:100%;height:auto;display:block}
+.dispersao text{font-size:10px;fill:var(--fraco);font-family:var(--f-texto)}
+.dispersao .eixo{font-size:11px;font-weight:700}
+.dispersao .g{stroke:var(--linha);stroke-width:1}
+.dispersao .diag{stroke:var(--suave);stroke-width:1;stroke-dasharray:4 4}
+.dispersao .diag-t{fill:var(--suave)}
+.dispersao circle{cursor:pointer;opacity:.9;stroke:#0b0e13;stroke-width:.8}
+.cmp-item .duas{grid-column:1/3;display:flex;flex-direction:column;gap:2px}
+.cmp-item .duas i{display:block;height:4px;border-radius:2px;min-width:1px}
+.cmp-item .nums{grid-column:1/3;display:flex;gap:12px;font-size:11px;font-weight:600;font-variant-numeric:tabular-nums}
+
+.seletor select.inativo{opacity:.45}
+
+/* Botão da legenda: seta quando fechada, "Fechar ✕" quando aberta */
+.leg-fechar{display:none}
+@media(max-width:899px){
+  .leg-botao{width:100%;justify-content:flex-start}
+  .leg-seta{width:7px;height:7px;border-right:2px solid var(--suave);border-bottom:2px solid var(--suave);transform:rotate(45deg) translate(-2px,-2px);margin-left:2px}
+  .legenda.aberta .leg-seta{display:none}
+  .legenda.aberta .leg-fechar{display:inline-flex;margin-left:auto;background:var(--painel-2);border:1px solid var(--linha-2);border-radius:14px;padding:4px 10px;font-size:12px;color:var(--texto)}
+}
+
+</style>
+<header class="topo">
+  <div class="marca"><span>Juazeiro · BA</span><h1>Mapa Eleitoral</h1></div>
+  <div class="seletor">
+    <label for="eleicao">Eleição</label>
+    <select id="eleicao">
+      <optgroup label="2026 · Geral (1º turno)">
+        <option value="2026_PRESIDENTE_1">Presidente 2026 · 1º turno</option>
+        <option value="2026_GOVERNADOR_1">Governador 2026 · 1º turno</option>
+        <option value="2026_SENADOR">Senador 2026</option>
+        <option value="2026_DEPUTADO_FEDERAL">Deputado Federal 2026</option>
+        <option value="2026_DEPUTADO_ESTADUAL">Deputado Estadual 2026</option>
+      </optgroup>
+      <optgroup label="2024 · Municipal">
+        <option value="2024_PREFEITO" selected>Prefeito 2024</option>
+        <option value="2024_VEREADOR">Vereador 2024</option>
+      </optgroup>
+      <optgroup label="2022 · Geral">
+        <option value="2022_PRESIDENTE_2">Presidente 2022 · 2º turno</option>
+        <option value="2022_PRESIDENTE_1">Presidente 2022 · 1º turno</option>
+        <option value="2022_GOVERNADOR_2">Governador 2022 · 2º turno</option>
+        <option value="2022_GOVERNADOR_1">Governador 2022 · 1º turno</option>
+        <option value="2022_SENADOR">Senador 2022</option>
+        <option value="2022_DEPUTADO_FEDERAL">Deputado Federal 2022</option>
+        <option value="2022_DEPUTADO_ESTADUAL">Deputado Estadual 2022</option>
+      </optgroup>
+      <optgroup label="2020 · Municipal">
+        <option value="2020_PREFEITO">Prefeito 2020</option>
+        <option value="2020_VEREADOR">Vereador 2020</option>
+      </optgroup>
+    </select>
+  </div>
+</header>
+<main class="app">
+  <div id="map" role="region" aria-label="Mapa de Juazeiro"></div>
+  <button class="chip-inicio" id="chip-inicio" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Ver Juazeiro inteira</button>
+  <div class="legenda" id="legenda">
+    <button class="leg-botao" id="leg-botao" aria-expanded="false" aria-controls="leg-conteudo"><span class="amostras" id="leg-amostras"></span><span class="leg-rotulo">Legenda</span><span class="leg-seta" aria-hidden="true"></span><span class="leg-fechar">Fechar ✕</span></button>
+    <div class="leg-conteudo" id="leg-conteudo">
+      <label for="colorir">Colorir o mapa por</label>
+      <select id="colorir"><option value="vencedor">Quem venceu</option></select>
+      <div id="leg-itens"></div>
+      <p class="leg-dica" id="leg-dica"></p>
+      <div class="camadas">
+        <button data-camada="camadaBairros" aria-pressed="true">Bairros</button>
+        <button data-camada="camadaLocais" aria-pressed="true">Locais de votação</button>
+      </div>
+    </div>
+  </div>
+  <aside class="painel" id="painel" aria-labelledby="titulo-painel">
+    <div class="alca" id="alca" role="button" aria-label="Expandir ou recolher o painel"></div>
+    <div class="painel-cab" id="painel-cab"><p class="sobre">Juazeiro · Bahia</p><h2 id="titulo-painel">Mapa Eleitoral</h2></div>
+    <div class="painel-corpo" id="painel-corpo"><p class="carregando">Carregando resultados do TSE…</p></div>
+  </aside>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+'use strict';
+/* ══════════════════════════════════════════════════════════
+   Utilidades
+══════════════════════════════════════════════════════════ */
+const $=s=>document.querySelector(s);
+const fmt=n=>Number(n).toLocaleString('pt-BR');
+const pct=(n,casas=1)=>(Number.isFinite(n)?n:0).toLocaleString('pt-BR',{minimumFractionDigits:casas,maximumFractionDigits:casas})+'%';
+const mil=n=>n>=1e4?(n/1e3).toLocaleString('pt-BR',{maximumFractionDigits:1})+' mil':fmt(n);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const soma=o=>Object.values(o).reduce((a,b)=>a+b,0);
+const ordenar=v=>Object.entries(v).sort((a,b)=>b[1]-a[1]);
+const semAcento=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase();
+const PASSAR_MOUSE=matchMedia('(hover:hover) and (pointer:fine)').matches;
+const MOVIMENTO=!matchMedia('(prefers-reduced-motion:reduce)').matches;
+const DESKTOP=()=>innerWidth>=900;
+const PALETA_EXTRA=['#22b8cf','#e879a6','#f5a524','#c9a27e','#7dd3fc','#9aa5b8','#b07cff','#2fbf71'];
+
+/* ══════════════════════════════════════════════════════════
+   Estado
+══════════════════════════════════════════════════════════ */
+const estado={modo:'eleicao',verEleitos:false,eleicao:'2024_PREFEITO',nivel:'cidade',bairro:null,local:null,candidato:null,colorir:'vencedor',
+  ordemBairros:'votos',verTodos:false,camadaBairros:true,camadaLocais:true};
+let D=null;                    // dados.json
+const cache={};                // agregados por eleição
+const BAIRRO={};               // id -> bairro
+
+/* ══════════════════════════════════════════════════════════
+   Agregação: urna -> local -> bairro -> cidade
+══════════════════════════════════════════════════════════ */
+function novoTotal(){return {a:0,c:0,br:0,nu:0,lg:0,v:{},urnas:0,locais:new Set()}}
+function acumular(T,s,lid){
+  T.a+=s[1];T.c+=s[2];T.br+=s[3];T.nu+=s[4];T.lg+=s[5];T.urnas++;T.locais.add(lid);
+  for(const n in s[6])T.v[n]=(T.v[n]||0)+s[6][n];
+}
+function agregados(chave){
+  if(cache[chave])return cache[chave];
+  const E=D.eleicoes[chave],L=D.anos[E.ano].locais;
+  const R={E,L,cidade:novoTotal(),bairros:{},locais:{},secoesPorLocal:{}};
+  for(const [sk,s] of Object.entries(E.secoes)){
+    const lid=s[0],l=L[lid];
+    acumular(R.cidade,s,lid);
+    acumular(R.locais[lid]||(R.locais[lid]=novoTotal()),s,lid);
+    (R.secoesPorLocal[lid]||(R.secoesPorLocal[lid]=[])).push(sk);
+    if(l&&l.b)acumular(R.bairros[l.b]||(R.bairros[l.b]=novoTotal()),s,lid);
+  }
+  for(const k in R.secoesPorLocal)R.secoesPorLocal[k].sort((a,b)=>+a.split('-')[1]-+b.split('-')[1]);
+  // cores: as definidas nos dados; os demais candidatos majoritários recebem tons da paleta auxiliar
+  const usadas=new Set(Object.values(E.cands).map(c=>c.c).filter(Boolean));
+  const livres=PALETA_EXTRA.filter(c=>!usadas.has(c));let i=0;
+  for(const [n] of ordenar(R.cidade.v)){const c=E.cands[n];if(!c.c&&!isVereador(chave))c.c=livres[i++%livres.length]}
+  return cache[chave]=R;
+}
+// proporcional (vereador e deputados): muitos candidatos, busca + ranking em vez de lista completa
+const isVereador=(ch=estado.eleicao)=>!!D.indice[ch].prop;
+const validos=T=>soma(T.v);                      // nominais (+ legenda, no caso de vereador)
+const nominais=(T,E)=>Object.entries(T.v).reduce((a,[n,q])=>a+(E.cands[n].leg?0:q),0);
+const cand=(n,E=agregados(estado.eleicao).E)=>E.cands[n];
+const corCand=n=>isVereador()?'var(--acento)':(cand(n).c||'#9aa5b8');
+function vencedor(T,E){
+  const r=ordenar(T.v).filter(([n])=>!E.cands[n].leg);
+  if(!r.length)return null;
+  const tot=validos(T);
+  return {n:r[0][0],q:r[0][1],p:r[0][1]/tot*100,margem:r[1]?(r[0][1]-r[1][1])/tot*100:100};
+}
+const partePct=(T,n)=>{const t=validos(T);return t?(T.v[n]||0)/t*100:0};
+
+/* ══════════════════════════════════════════════════════════
+   Mapa
+══════════════════════════════════════════════════════════ */
+const map=L.map('map',{zoomControl:false,center:[-9.43,-40.50],zoom:12,minZoom:8,maxZoom:18,
+  maxBounds:[[-10.6,-41.5],[-8.7,-39.4]],attributionControl:true});
+L.control.zoom({position:'bottomright'}).addTo(map);
+map.attributionControl.setPrefix(false);
+map.createPane('bairros').style.zIndex=410;
+map.createPane('contorno').style.zIndex=420;
+map.createPane('locais').style.zIndex=450;
+map.createPane('rotulos').style.zIndex=460;
+map.getPane('rotulos').style.pointerEvents='none';
+
+/* Mapa de fundo desenhado na própria página a partir de dados do OpenStreetMap (via Overture Maps).
+   A página publicada não pode carregar imagens de mapa de outros sites. */
+const BASE_COR={terra:'#141820',agua:'#173247',aguaLinha:'#1f4a66',canal:'#1a3d52',casco:'#0d1014',
+  via:['#5c6678','#56606f','#4a5260','#3e4552','#323843','#2c323c','#2c323c','#2c323c','#262b33']};
+const VIA_LARG=[[2.2,1.6],[2,1.4],[1.6,1.1],[1.3,.9],[1,.7],[.9,.6],[.8,.5],[.8,.5],[.6,.4]]; // [z16, z13] em px
+const VIA_ZMIN=[8,8,10,12,13,14,14,14,15];
+let BASE=null;
+function decodificarBase(lst,q){
+  return lst.map(arr=>{const pts=new Float64Array(arr.length);let x=0,y=0;
+    for(let i=0;i<arr.length;i+=2){x+=arr[i];y+=arr[i+1];pts[i]=x/q;pts[i+1]=y/q}return pts});
+}
+const basePronta=fetch('basemap.json').then(r=>r.json()).then(b=>{
+  const q=b.q;
+  BASE={
+    vias:b.roads.map(r=>({c:r[0],bb:r[1],g:decodificarBase(r[2],q)})),
+    aguaP:b.waterPoly.map(r=>({bb:r[0],g:decodificarBase(r[1],q)})),
+    aguaL:b.waterLine.map(r=>({c:r[0],bb:r[1],g:decodificarBase(r[2],q)})),
+    bairros:b.bairros,cidades:b.cidades
+  };
+  BASE.vias.sort((a,b)=>b.c-a.c); // vias maiores por cima
+  return BASE;
+}).catch(()=>null);
+
+function merc(lon,lat,z){
+  const s=256*Math.pow(2,z),r=lat*Math.PI/180;
+  return [(lon+180)/360*s,(1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*s];
+}
+function limitesTile(c){
+  const n=Math.pow(2,c.z),lon=x=>x/n*360-180,
+        lat=y=>Math.atan(Math.sinh(Math.PI*(1-2*y/n)))*180/Math.PI;
+  return [lon(c.x),lat(c.y+1),lon(c.x+1),lat(c.y)];
+}
+const MapaBase=L.GridLayer.extend({
+  createTile(c,done){
+    const dpr=Math.min(window.devicePixelRatio||1,3),cv=document.createElement('canvas');
+    cv.width=cv.height=256*dpr;
+    basePronta.then(B=>{try{this.desenhar(cv,c,dpr,B)}finally{done(null,cv)}});
+    return cv;
+  },
+  desenhar(cv,c,dpr,B){
+    const ctx=cv.getContext('2d');ctx.scale(dpr,dpr);
+    ctx.fillStyle=BASE_COR.terra;ctx.fillRect(0,0,256,256);
+    if(!B)return;
+    const [w,s,e,n]=limitesTile(c),m=(e-w)*.05,ox=c.x*256,oy=c.y*256;
+    const toca=bb=>bb[0]<e+m&&bb[2]>w-m&&bb[1]<n+m&&bb[3]>s-m;
+    const caminho=(g,fechar)=>{for(const pts of g){
+      for(let i=0;i<pts.length;i+=2){const [X,Y]=merc(pts[i],pts[i+1],c.z);
+        i?ctx.lineTo(X-ox,Y-oy):ctx.moveTo(X-ox,Y-oy)}
+      if(fechar)ctx.closePath()}};
+    ctx.lineJoin=ctx.lineCap='round';
+    ctx.fillStyle=BASE_COR.agua;
+    for(const f of B.aguaP)if(toca(f.bb)){ctx.beginPath();caminho(f.g,true);ctx.fill('evenodd')}
+    for(const f of B.aguaL)if(c.z>=(f.c?12:11)&&toca(f.bb)){
+      ctx.strokeStyle=f.c?BASE_COR.canal:BASE_COR.aguaLinha;ctx.lineWidth=c.z>=14?1.6:1;
+      ctx.beginPath();caminho(f.g,false);ctx.stroke()}
+    const t=Math.max(0,Math.min(1,(c.z-13)/3)),k=Math.pow(1.6,Math.max(0,c.z-16));
+    for(const f of B.vias){
+      if(c.z<VIA_ZMIN[f.c]||!toca(f.bb))continue;
+      const [a,b]=VIA_LARG[f.c];
+      ctx.strokeStyle=BASE_COR.via[f.c];ctx.lineWidth=(b+(a-b)*t)*k*(c.z<12?.8:1);
+      ctx.beginPath();caminho(f.g,false);ctx.stroke();
+    }
+  }
+});
+new MapaBase({minZoom:8,maxZoom:18,attribution:'Mapa © OpenStreetMap (Overture Maps) · Resultados: TSE'}).addTo(map);
+
+/* Nomes das cidades (só no zoom afastado) */
+const rotulosCidades=L.layerGroup();
+basePronta.then(B=>{
+  if(!B)return;
+  B.cidades.forEach(([nome,p])=>L.marker([p[1],p[0]],{pane:'rotulos',interactive:false,keyboard:false,
+    icon:L.divIcon({className:'rotulo rotulo-cidade',html:`<span>${nome}</span>`,iconSize:null})}).addTo(rotulosCidades));
+  const atual=()=>{if(map.getZoom()<=13)map.addLayer(rotulosCidades);else map.removeLayer(rotulosCidades)};
+  map.on('zoomend',atual);atual();
+});
+
+
+function decodificar(arr,q=1e5){
+  const out=[];let x=0,y=0;
+  for(let i=0;i<arr.length;i+=2){x+=arr[i];y+=arr[i+1];out.push([y/q,x/q])}
+  return out;
+}
+
+const camadas={bairros:{},locais:{},rotulos:L.layerGroup(),contorno:null};
+
+function montarMapa(){
+  camadas.contorno=L.polygon(D.municipio.map(p=>p.map(r=>decodificar(r))),
+    {pane:'contorno',color:'#f2b33d',weight:1.6,opacity:.55,dashArray:'6 5',fill:false,interactive:false}).addTo(map);
+  for(const b of D.bairros){
+    BAIRRO[b.id]=b;
+    if(b.geo){
+      const lay=L.polygon(b.geo.map(p=>p.map(r=>decodificar(r))),{pane:'bairros',weight:1,smoothFactor:.5});
+      lay.on('click',e=>{L.DomEvent.stopPropagation(e);
+        // tocar de novo no bairro já aberto volta para a cidade
+        if(estado.nivel==='bairro'&&estado.bairro===b.id)voltar();else irBairro(b.id)});
+      if(PASSAR_MOUSE){
+        lay.on('mouseover',()=>{if(estado.bairro!==b.id)lay.setStyle({weight:2.2})});
+        lay.on('mouseout',()=>estilizarBairro(b.id));
+        lay.bindTooltip(()=>dicaBairro(b.id),{sticky:true,className:'dica-mapa',direction:'top',offset:[0,-8]});
+      }
+      lay.addTo(map);camadas.bairros[b.id]=lay;
+    }
+    const cls=b.tipo==='bairro'?'rotulo-bairro':'rotulo-distrito';
+    const m=L.marker([b.c[1],b.c[0]],{pane:'rotulos',interactive:false,keyboard:false,
+      icon:L.divIcon({className:'rotulo '+cls,html:`<span>${esc(b.nome)}</span>`,iconSize:null})});
+    m.tipo=b.tipo;m.addTo(camadas.rotulos);
+  }
+  camadas.rotulos.addTo(map);
+  map.on('zoomend',atualizarRotulos);
+  map.fitBounds(L.latLngBounds([[-9.475,-40.56],[-9.39,-40.455]]),{animate:false});
+}
+function atualizarRotulos(){
+  const z=map.getZoom();
+  camadas.rotulos.eachLayer(m=>{
+    const ver=m.tipo==='bairro'?z>=14:(z>=10&&z<=14);
+    const el=m.getElement();if(el)el.style.display=ver?'':'none';
+  });
+}
+
+/* Escala de cor por intensidade (0..1), sobre a cor do candidato */
+function estiloBairro(id){
+  if(modoComparar())return cmpPronto()?estiloComparar(id):{color:'#6b7486',weight:.8,opacity:.5,dashArray:null,fill:false};
+  const R=agregados(estado.eleicao),T=R.bairros[id],sel=estado.bairro===id,algumSel=!!estado.bairro;
+  if(!estado.camadaBairros)return {stroke:false,fill:false};
+  if(!T)return {color:'#6b7486',weight:sel?2.5:.8,opacity:sel?1:.6,dashArray:'3 4',fill:true,fillColor:'#0b0e13',fillOpacity:sel?.25:.02};
+  let cor,op;
+  const m=modoCor();
+  if(m.tipo==='candidato'){
+    const p=partePct(T,m.n);cor=m.cor;op=.06+.66*Math.min(1,p/Math.max(m.max,1));
+  }else if(m.tipo==='comparecimento'){
+    const t=T.c/T.a*100;cor='#22b8cf';op=.06+.7*Math.max(0,Math.min(1,(t-m.min)/Math.max(m.max-m.min,1)));
+  }else{
+    const v=vencedor(T,R.E);cor=v?corCand(v.n):'#6b7486';op=.2+.5*Math.min(1,(v?v.margem:0)/35);
+  }
+  return {color:sel?'#ffffff':cor,weight:sel?3:1,opacity:sel?1:.85,dashArray:null,fill:true,fillColor:cor,
+    fillOpacity:algumSel&&!sel?op*.45:op};
+}
+function estilizarBairro(id){const l=camadas.bairros[id];if(l)l.setStyle(estiloBairro(id))}
+function estilizarBairros(){for(const id in camadas.bairros)estilizarBairro(id);const s=camadas.bairros[estado.bairro];if(s)s.bringToFront()}
+
+/* Modo de cor atual, com escala calculada sobre os bairros */
+function modoCor(){
+  const R=agregados(estado.eleicao);
+  let c=estado.colorir;
+  if(isVereador())c=estado.candidato?'cand:'+estado.candidato:'comparecimento';
+  if(c.startsWith('cand:')){
+    const n=c.slice(5);
+    const max=Math.max(...Object.values(R.bairros).map(T=>partePct(T,n)),0.1);
+    return {tipo:'candidato',n,cor:corCand(n),max};
+  }
+  if(c==='comparecimento'){
+    const ts=Object.values(R.bairros).map(T=>T.c/T.a*100);
+    return {tipo:'comparecimento',min:Math.min(...ts),max:Math.max(...ts)};
+  }
+  return {tipo:'vencedor'};
+}
+
+/* Locais de votação */
+function desenharLocais(){
+  for(const id in camadas.locais)map.removeLayer(camadas.locais[id]);
+  camadas.locais={};
+  if(!estado.camadaLocais)return;
+  if(modoComparar()){if(cmpPronto())desenharLocaisComparar();return}
+  const R=agregados(estado.eleicao),m=modoCor();
+  const valor=T=>m.tipo==='candidato'?(T.v[m.n]||0):validos(T);
+  const mx=Math.max(...Object.values(R.locais).map(valor),1);
+  for(const [lid,T] of Object.entries(R.locais)){
+    const l=R.L[lid];if(!l||!l.p)continue;
+    const v=valor(T),sel=estado.local===lid,foraDoBairro=estado.bairro&&l.b!==estado.bairro;
+    let cor;
+    if(m.tipo==='candidato')cor=v>0?m.cor:'#4a5263';
+    else if(m.tipo==='comparecimento')cor='#22b8cf';
+    else{const w=vencedor(T,R.E);cor=w?corCand(w.n):'#6b7486'}
+    const r=v>0?Math.max(4,Math.sqrt(v/mx)*17):3.5;
+    const c=L.circleMarker([l.p[1],l.p[0]],{pane:'locais',radius:r,color:sel?'#fff':'#0b0e13',weight:sel?3:1.4,
+      fillColor:cor,fillOpacity:foraDoBairro?.35:.95,opacity:foraDoBairro?.5:1});
+    c.on('click',e=>{L.DomEvent.stopPropagation(e);irLocal(lid)});
+    if(PASSAR_MOUSE)c.bindTooltip(()=>dicaLocal(lid),{className:'dica-mapa',direction:'top',offset:[0,-6]});
+    c.addTo(map);camadas.locais[lid]=c;
+  }
+  if(estado.local&&camadas.locais[estado.local])camadas.locais[estado.local].bringToFront();
+}
+
+function dicaBairro(id){
+  if(modoComparar())return cmpPronto()?cmpDica(BAIRRO[id].nome,cmpPar('bairros',id)):esc(BAIRRO[id].nome);
+  const R=agregados(estado.eleicao),T=R.bairros[id],b=BAIRRO[id];
+  if(!T)return `<b>${esc(b.nome)}</b><br><span class="x">Sem local de votação</span>`;
+  const m=modoCor();
+  if(m.tipo==='candidato')return `<b>${esc(b.nome)}</b><br>${esc(cand(m.n).u)}: <b>${fmt(T.v[m.n]||0)}</b> votos (${pct(partePct(T,m.n))})`;
+  if(m.tipo==='comparecimento')return `<b>${esc(b.nome)}</b><br>Comparecimento: <b>${pct(T.c/T.a*100)}</b>`;
+  const v=vencedor(T,R.E);
+  return `<b>${esc(b.nome)}</b><br><span style="color:${corCand(v.n)}">●</span> ${esc(cand(v.n).u)} <b>${pct(v.p)}</b><br><span class="x">${T.locais.size} local(is) · ${fmt(T.c)} votantes</span>`;
+}
+function dicaLocal(lid){
+  const R=agregados(estado.eleicao),T=R.locais[lid],l=R.L[lid],m=modoCor();
+  if(m.tipo==='candidato')return `<b>${esc(l.n)}</b><br>${esc(cand(m.n).u)}: <b>${fmt(T.v[m.n]||0)}</b> votos (${pct(partePct(T,m.n))})`;
+  const v=vencedor(T,R.E);
+  return `<b>${esc(l.n)}</b><br><span style="color:${corCand(v.n)}">●</span> ${esc(cand(v.n).u)} <b>${pct(v.p)}</b><br><span class="x">${T.urnas} urna(s) · ${fmt(T.c)} votantes</span>`;
+}
+
+/* Enquadrar sem ficar atrás da folha do celular */
+function enquadrar(bounds,maxZoom=16){
+  const pad=DESKTOP()?{paddingTopLeft:[40,40],paddingBottomRight:[290,40]}
+    :{paddingTopLeft:[24,60],paddingBottomRight:[24,alturaFolha()+24]};
+  map.flyToBounds(bounds,{...pad,maxZoom,duration:MOVIMENTO?.75:0,animate:MOVIMENTO});
+}
+function focarPonto(ll,z){
+  // no celular, desloca o centro para o ponto ficar acima da folha
+  const desloc=DESKTOP()?[-125,0]:[0,alturaFolha()/2-20];
+  const centro=map.unproject(map.project(ll,z).add(desloc),z);
+  map.flyTo(centro,z,{duration:MOVIMENTO?.7:0,animate:MOVIMENTO});
+}
+function boundsBairro(id){
+  const lay=camadas.bairros[id];if(lay)return lay.getBounds();
+  const b=BAIRRO[id];return L.latLngBounds([[b.bb[1],b.bb[0]],[b.bb[3],b.bb[2]]]);
+}
+
+/* ══════════════════════════════════════════════════════════
+   Navegação
+══════════════════════════════════════════════════════════ */
+/* Histórico: cada nível aberto ganha uma entrada, para o "voltar" do celular subir um nível */
+let pilha=0,irParaCidade=false;
+function empurrar(){try{history.pushState({mapa:pilha+1},'');pilha++}catch(e){}}
+function subir(){
+  if(estado.nivel==='local'&&estado.bairro)irBairro(estado.bairro,{historico:false});
+  else if(estado.nivel!=='cidade')irCidade({historico:false});
+}
+function voltar(){if(pilha>0)history.back();else subir()}
+function voltarAoInicio(){
+  if(pilha>0){irParaCidade=true;history.go(-pilha)}else irCidade({historico:false});
+}
+addEventListener('popstate',()=>{
+  pilha=Math.max(0,pilha-1);
+  if(irParaCidade){irParaCidade=false;pilha=0;irCidade({historico:false})}else subir();
+});
+
+function irCidade(){
+  estado.nivel='cidade';estado.bairro=null;estado.local=null;estado.verTodos=false;
+  atualizar();
+  enquadrar(L.latLngBounds([[-9.475,-40.56],[-9.39,-40.455]]),14);
+}
+function irBairro(id,{mover=true,historico=true}={}){
+  if(historico&&estado.nivel==='cidade')empurrar();
+  estado.nivel='bairro';estado.bairro=id;estado.local=null;estado.verTodos=false;
+  atualizar();folha('meio');
+  if(mover)enquadrar(boundsBairro(id),16);
+}
+function irLocal(lid){
+  const l=infoLocal(lid);if(!l)return;
+  if(estado.nivel!=='local')empurrar();
+  estado.nivel='local';estado.local=lid;estado.bairro=l.b||null;
+  atualizar();folha('meio');
+  if(l.p)focarPonto(L.latLng(l.p[1],l.p[0]),Math.max(map.getZoom(),16));
+}
+function escolherCandidato(n){
+  estado.candidato=n;estado.verTodos=false;
+  atualizar();
+}
+
+/* ══════════════════════════════════════════════════════════
+   Painel
+══════════════════════════════════════════════════════════ */
+function kpis(T){
+  // senador 2026: cada eleitor deu 2 votos, então brancos e nulos contam sobre 2 votos por eleitor
+  const vagas=D.indice[estado.eleicao].vagas||1,brn=T.br+T.nu;
+  return `<div class="kpis">
+    <div class="kpi"><span>Eleitores aptos</span><b>${mil(T.a)}</b></div>
+    <div class="kpi"><span>Comparecimento</span><b>${pct(T.c/T.a*100)}</b><em>${mil(T.c)}</em>
+      <div class="medidor"><i style="width:${T.c/T.a*100}%"></i></div></div>
+    <div class="kpi"><span>Abstenção</span><b>${pct((T.a-T.c)/T.a*100)}</b><em>${mil(T.a-T.c)}</em></div>
+    <div class="kpi"><span>Brancos e nulos</span><b>${pct(brn/(T.c*vagas)*100)}</b><em>${mil(brn)}</em></div>
+  </div>`;
+}
+function linhasCandidatos(T,ref,{clicavel=true}={}){
+  const R=agregados(estado.eleicao),E=R.E,tot=validos(T),m=modoCor();
+  return `<div class="cands">${ordenar(T.v).filter(([n])=>!E.cands[n].leg).map(([n,q])=>{
+    const c=E.cands[n],p=q/tot*100,cor=corCand(n);
+    let det=`<span>${fmt(q)} votos</span>`;
+    if(ref){const d=p-partePct(ref,n);det+=`<span class="${d>=0?'dif-sobe':'dif-desce'}">${d>=0?'+':''}${d.toLocaleString('pt-BR',{maximumFractionDigits:1,minimumFractionDigits:1})} p.p. vs. cidade</span>`}
+    else det+=`<span>${esc(c.n||'')}</span>`;
+    const tag=clicavel?'button':'div',ativo=m.tipo==='candidato'&&m.n===n;
+    return `<${tag} class="cand${ativo?' ativo':''}" ${clicavel?`data-colorir="${n}" aria-pressed="${ativo}" title="Colorir o mapa pelo desempenho de ${esc(c.u)}"`:''}>
+      <span class="cor" style="background:${cor}"></span>
+      <span class="nome">${esc(c.u)}<small>${esc(c.p)}</small>${c.s?`<span class="selo${/Eleito/.test(c.s)?'':' neutro'}">${esc(c.s)}</span>`:''}</span>
+      <span class="pct">${pct(p)}</span>
+      <span class="barra"><i style="width:${p}%;background:${cor}"></i></span>
+      <span class="det">${det}</span>
+    </${tag}>`;
+  }).join('')}</div>`;
+}
+function barraEmpilhada(T,E){
+  const tot=validos(T);
+  return `<span class="empilhada">${ordenar(T.v).filter(([n])=>!E.cands[n].leg).map(([n,q])=>`<i style="width:${q/tot*100}%;background:${corCand(n)}"></i>`).join('')}</span>`;
+}
+
+/* Bloco de vereador: busca + ficha */
+function blocoBuscaVereador(){
+  return `<div class="busca">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input id="busca" type="search" autocomplete="off" placeholder="Buscar candidato por nome ou número" aria-label="Buscar candidato">
+  </div><ul class="sugestoes" id="sugestoes" hidden></ul>`;
+}
+function fichaCandidato(n,T,escopo){
+  const R=agregados(estado.eleicao),c=R.E.cands[n],cid=R.cidade;
+  const rank=ordenar(cid.v).filter(([k])=>!R.E.cands[k].leg).findIndex(([k])=>k===n)+1;
+  const noEscopo=T&&T!==cid;
+  return `<div class="ficha">
+    <div class="ficha-topo"><div><h3>${esc(c.u)}</h3><p>${esc(c.p)} · nº ${n}${c.s?` · <b style="color:var(--acento)">${esc(c.s)}</b>`:''}</p></div>
+      <button class="fechar" data-limpar>Limpar</button></div>
+    <div class="kpis">
+      <div class="kpi"><span>Votos na cidade</span><b>${fmt(cid.v[n]||0)}</b><em>${rank}º</em></div>
+      <div class="kpi"><span>${noEscopo?'Votos '+escopo:'Dos votos válidos'}</span><b>${noEscopo?fmt(T.v[n]||0):pct(partePct(cid,n),2)}</b>${noEscopo?`<em>${pct(partePct(T,n))}</em>`:''}</div>
+    </div>
+  </div>`;
+}
+function maisVotadosVereador(T,{limite=10}={}){
+  const R=agregados(estado.eleicao),E=R.E,tot=validos(T);
+  const lista=ordenar(T.v).filter(([n])=>!E.cands[n].leg);
+  const mostrar=estado.verTodos?lista:lista.slice(0,limite);
+  return `<div class="cands">${mostrar.map(([n,q],i)=>{
+    const c=E.cands[n],sel=estado.candidato===n,p=q/tot*100;
+    return `<button class="cand${sel?' ativo':''}" data-candidato="${n}" aria-pressed="${sel}">
+      <span class="cor" style="background:${sel?'var(--acento)':'#5b7cb0'}"></span>
+      <span class="nome">${i+1}. ${esc(c.u)}<small>${esc(c.p)}</small>${/Eleito/.test(c.s||'')?'<span class="selo">Eleito</span>':''}</span>
+      <span class="pct" style="font-size:16px">${fmt(q)}</span>
+      <span class="barra"><i style="width:${p/(lista[0][1]/tot*100)*100}%;background:${sel?'var(--acento)':'#5b7cb0'}"></i></span>
+    </button>`}).join('')}</div>
+    ${lista.length>limite?`<button class="ver-mais" data-ver-todos>${estado.verTodos?'Mostrar menos':`Ver todos os ${lista.length} candidatos com votos`}</button>`:''}`;
+}
+function camaraEleita(){
+  const R=agregados(estado.eleicao),E=R.E;
+  const todos=ordenar(R.cidade.v).filter(([n])=>/Eleito/.test(E.cands[n].s||''));
+  if(!todos.length)return '<p class="nota">O TSE ainda não informou os eleitos.</p>';
+  const lim=15,eleitos=estado.verEleitos?todos:todos.slice(0,lim),max=todos[0][1];
+  return `<div class="cands">${eleitos.map(([n,q],i)=>{const c=E.cands[n],sel=estado.candidato===n;
+    return `<button class="cand${sel?' ativo':''}" data-candidato="${n}">
+      <span class="cor" style="background:${sel?'var(--acento)':'#5b7cb0'}"></span>
+      <span class="nome">${esc(c.u)}<small>${esc(c.p)}</small><span class="selo neutro">${c.s==='Eleito por QP'?'QP':'Média'}</span></span>
+      <span class="pct" style="font-size:16px">${fmt(q)}</span>
+      <span class="barra"><i style="width:${q/max*100}%;background:${sel?'var(--acento)':'#5b7cb0'}"></i></span></button>`}).join('')}</div>
+    ${todos.length>lim?`<button class="ver-mais" data-ver-eleitos>${estado.verEleitos?'Mostrar menos':`Ver todos os ${todos.length} eleitos`}</button>`:''}`;
+}
+function votosPorPartido(){
+  const R=agregados(estado.eleicao),E=R.E,p={};
+  for(const [n,q] of Object.entries(R.cidade.v)){const k=E.cands[n].p||'—';p[k]=(p[k]||0)+q}
+  const lista=ordenar(p),tot=validos(R.cidade),max=lista[0][1];
+  return `<div class="itens">${lista.slice(0,12).map(([k,q])=>`<div class="item" style="cursor:default">
+      <span class="t">${esc(k)}</span><span class="v"><b>${fmt(q)}</b> · ${pct(q/tot*100)}</span>
+      <span class="empilhada"><i style="width:${q/max*100}%;background:#5b7cb0"></i></span></div>`).join('')}</div>`;
+}
+
+/* Lista de bairros com ordenação */
+function listaBairros(){
+  const R=agregados(estado.eleicao),E=R.E,m=modoCor();
+  const ids=Object.keys(R.bairros);
+  const chave={
+    votos:id=>-R.bairros[id].c,
+    vantagem:id=>{const v=vencedor(R.bairros[id],E);return -(v?v.margem:0)},
+    comparecimento:id=>-R.bairros[id].c/R.bairros[id].a,
+    nome:id=>BAIRRO[id].nome,
+    candidato:id=>-partePct(R.bairros[id],m.n)
+  };
+  let ord=estado.ordemBairros;if(ord==='candidato'&&m.tipo!=='candidato')ord='votos';
+  ids.sort((a,b)=>{const x=chave[ord](a),y=chave[ord](b);return typeof x==='string'?x.localeCompare(y):x-y});
+  const opcoes=[['votos','Votantes'],...(m.tipo==='candidato'?[['candidato','% do candidato']]:isVereador()?[]:[['vantagem','Vantagem']]),['comparecimento','Comparec.'],['nome','A–Z']];
+  const semDados=D.bairros.filter(b=>!R.bairros[b.id]&&b.geo).map(b=>b.nome).sort();
+  return `<div class="bloco"><p class="bloco-tit"><span>Bairros e distritos <small>${ids.length}</small></span>
+    <span class="ordem" role="group" aria-label="Ordenar bairros">${opcoes.map(([k,t])=>`<button data-ordem="${k}" aria-pressed="${ord===k}">${t}</button>`).join('')}</span></p>
+    <div class="itens">${ids.map(id=>{
+      const T=R.bairros[id],b=BAIRRO[id];let dir,barra;
+      if(m.tipo==='candidato'){const p=partePct(T,m.n);dir=`<b>${fmt(T.v[m.n]||0)}</b> · ${pct(p)}`;barra=`<span class="empilhada"><i style="width:${p/m.max*100}%;background:${m.cor}"></i></span>`}
+      else if(isVereador()||ord==='comparecimento'){const t=T.c/T.a*100;dir=`<b>${pct(t)}</b> comparec.`;barra=`<span class="empilhada"><i style="width:${t}%;background:#22b8cf"></i></span>`}
+      else{const v=vencedor(T,E);dir=`<b style="color:${corCand(v.n)}">${esc(cand(v.n).u)}</b> ${pct(v.p)}`;barra=barraEmpilhada(T,E)}
+      return `<button class="item" data-bairro="${esc(id)}"><span class="t">${esc(b.nome)}${b.tipo!=='bairro'?`<small>${b.tipo}</small>`:''}</span><span class="v">${dir}</span>${barra}</button>`;
+    }).join('')}</div>
+    ${semDados.length?`<details class="mais"><summary>${semDados.length} bairros sem local de votação ▾</summary><p>${semDados.map(esc).join(' · ')}</p></details>`:''}
+  </div>`;
+}
+
+function htmlCidade(){
+  const R=agregados(estado.eleicao),E=R.E,T=R.cidade;
+  let h=`<div class="bloco">${kpis(T)}</div>`;
+  if(isVereador()){
+    h+=`<div class="bloco"><p class="bloco-tit"><span>Candidato</span><small>${Object.keys(R.cidade.v).filter(n=>!E.cands[n].leg).length} com votos</small></p>${blocoBuscaVereador()}
+      ${estado.candidato?`<div style="margin-top:12px">${fichaCandidato(estado.candidato,T)}</div>`:'<p class="nota" style="margin:10px 2px 0">Escolha um candidato para ver no mapa onde ele teve mais votos.</p>'}</div>`;
+    if(estado.candidato)h+=topBairrosCandidato(estado.candidato);
+    h+=`<div class="bloco"><p class="bloco-tit"><span>${E.cargo==='Vereador'?'Câmara eleita':'Eleitos pela Bahia'}</span><small>${E.cargo==='Vereador'?'21 vereadores':'ordem de votos em Juazeiro'}</small></p>${camaraEleita()}</div>`;
+    h+=`<div class="bloco"><p class="bloco-tit"><span>Votos por partido</span><small>nominais + legenda</small></p>${votosPorPartido()}</div>`;
+  }else{
+    h+=`<div class="bloco"><p class="bloco-tit"><span>Resultado</span><small>toque para colorir o mapa</small></p>${linhasCandidatos(T,null)}
+      ${(D.indice[estado.eleicao].vagas||1)>1?'<p class="nota" style="margin:10px 2px 0">Duas vagas em disputa: cada eleitor votou em até 2 candidatos. Os percentuais são sobre o total de votos válidos, como o TSE divulga.</p>':''}</div>`;
+  }
+  h+=listaBairros();
+  h+=`<div class="bloco"><p class="nota"><b>Fontes:</b> TSE, dados abertos de votação por seção e cadastro de locais de votação; contornos de bairros do OpenStreetMap (via Overture Maps).
+    <b>Como ler:</b> cada local de votação é contado no bairro onde o prédio fica, não onde o eleitor mora. Percentuais sobre votos válidos.</p></div>`;
+  return h;
+}
+function topBairrosCandidato(n){
+  const R=agregados(estado.eleicao);
+  const lista=Object.entries(R.bairros).map(([id,T])=>[id,T.v[n]||0,partePct(T,n)]).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  if(!lista.length)return '';
+  const max=lista[0][1];
+  return `<div class="bloco"><p class="bloco-tit"><span>Onde teve mais votos</span></p><div class="itens">${lista.map(([id,q,p])=>`<button class="item" data-bairro="${esc(id)}">
+    <span class="t">${esc(BAIRRO[id].nome)}</span><span class="v"><b>${fmt(q)}</b> · ${pct(p)} do bairro</span>
+    <span class="empilhada"><i style="width:${q/max*100}%;background:var(--acento)"></i></span></button>`).join('')}</div></div>`;
+}
+
+function htmlBairro(id){
+  const R=agregados(estado.eleicao),E=R.E,T=R.bairros[id],b=BAIRRO[id];
+  if(!T)return `<div class="bloco"><p class="vazio">Nenhum local de votação fica dentro deste ${b.tipo}. Quem mora aqui vota em colégios de bairros vizinhos, que aparecem como pontos no mapa.</p></div>`;
+  let h=`<div class="bloco">${kpis(T)}</div>`;
+  if(isVereador()){
+    if(estado.candidato)h+=`<div class="bloco">${fichaCandidato(estado.candidato,T,'no bairro')}</div>`;
+    else h+=`<div class="bloco">${blocoBuscaVereador()}</div>`;
+    h+=`<div class="bloco"><p class="bloco-tit"><span>Mais votados no ${b.tipo}</span></p>${maisVotadosVereador(T)}</div>`;
+  }else{
+    h+=`<div class="bloco"><p class="bloco-tit"><span>Resultado no ${b.tipo}</span></p>${linhasCandidatos(T,R.cidade)}</div>`;
+  }
+  const locais=[...T.locais].sort((a,b)=>R.locais[b].c-R.locais[a].c);
+  const maxCand=estado.candidato?Math.max(...locais.map(x=>partePct(R.locais[x],estado.candidato)),.1):1;
+  h+=`<div class="bloco"><p class="bloco-tit"><span>Locais de votação</span><small>${locais.length}</small></p><div class="itens">${locais.map(lid=>{
+    const TL=R.locais[lid],l=R.L[lid];let dir,barra;
+    if(isVereador()&&estado.candidato){const q=TL.v[estado.candidato]||0;dir=`<b>${fmt(q)}</b> votos · ${pct(partePct(TL,estado.candidato))}`;barra=`<span class="empilhada"><i style="width:${partePct(TL,estado.candidato)/maxCand*100}%;background:var(--acento)"></i></span>`}
+    else if(isVereador()){dir=`<b>${TL.urnas}</b> urnas · ${fmt(TL.c)} votantes`;barra=''}
+    else{const v=vencedor(TL,E);dir=`<b style="color:${corCand(v.n)}">${esc(cand(v.n).u)}</b> ${pct(v.p)}`;barra=barraEmpilhada(TL,E)}
+    return `<button class="item" data-local="${lid}"><span class="t">${esc(l.n)}</span><span class="v">${dir}</span>${barra}</button>`;
+  }).join('')}</div></div>`;
+  return h;
+}
+
+function htmlLocal(lid){
+  const R=agregados(estado.eleicao),E=R.E,T=R.locais[lid],l=R.L[lid];
+  if(!T)return `<div class="bloco"><p class="vazio">Este local não teve urnas nesta eleição.</p></div>`;
+  let h='';
+  if(l.b&&BAIRRO[l.b]&&semAcento(BAIRRO[l.b].nome)!==semAcento(l.bt.replace(/^(DISTRITO|POVOADO) /,'')))
+    h+=`<p class="nota" style="margin:12px 0 0">No cadastro do TSE, o bairro deste local é <b>${esc(l.bt)}</b>. No mapa, ele está dentro de ${esc(BAIRRO[l.b].nome)}.</p>`;
+  h+=`<div class="bloco">${kpis(T)}</div>`;
+  if(isVereador()){
+    if(estado.candidato)h+=`<div class="bloco">${fichaCandidato(estado.candidato,T,'neste local')}</div>`;
+    h+=`<div class="bloco"><p class="bloco-tit"><span>Mais votados no local</span></p>${maisVotadosVereador(T)}</div>`;
+  }else{
+    h+=`<div class="bloco"><p class="bloco-tit"><span>Resultado no local</span></p>${linhasCandidatos(T,R.cidade)}</div>`;
+  }
+  const secoes=R.secoesPorLocal[lid]||[];
+  h+=`<div class="bloco"><p class="bloco-tit"><span>Boletins de urna</span><small>${secoes.length} urna(s) · toque para abrir</small></p>
+    ${secoes.map(sk=>htmlUrna(sk,E.secoes[sk],l)).join('')}</div>`;
+  return h;
+}
+function htmlUrna(sk,s,l){
+  const R=agregados(estado.eleicao),E=R.E,[z,sec]=sk.split('-'),v=s[6],tot=soma(v);
+  const agregadas=Object.entries(l.ag||{}).filter(([,p])=>p===+sec).map(([a])=>a.padStart(4,'0'));
+  const lista=ordenar(v);
+  const top=lista.filter(([n])=>!E.cands[n].leg)[0];
+  let res='';
+  if(isVereador()&&estado.candidato)res=`<span style="color:var(--acento)">${fmt(v[estado.candidato]||0)}</span> <span style="color:var(--suave);font-weight:500">votos</span>`;
+  else if(top)res=`<span style="color:${corCand(top[0])}">${esc(cand(top[0]).u)}</span> ${fmt(top[1])}`;
+  const nom=lista.filter(([n])=>!E.cands[n].leg).reduce((a,[,q])=>a+q,0);
+  return `<details class="urna"><summary>
+      <span class="sec">Seção ${sec.padStart(4,'0')}</span><span class="res">${res}</span>
+      <span class="sub">Zona ${z} · ${fmt(s[2])} de ${fmt(s[1])} votaram (${pct(s[2]/s[1]*100)})</span>
+    </summary><div class="bu">
+      <div class="bu-cab"><span>Boletim de urna · ${esc(E.titulo)}</span><span>Z${z} S${sec.padStart(4,'0')}</span></div>
+      ${agregadas.length?`<p class="bu-nota">Inclui a seção agregada ${agregadas.join(', ')}.</p>`:''}
+      <div class="bu-grade">
+        <div><span>Aptos</span><b>${fmt(s[1])}</b></div><div><span>Votaram</span><b>${fmt(s[2])}</b></div><div><span>Faltaram</span><b>${fmt(s[1]-s[2])}</b></div>
+        <div><span>Nominais</span><b>${fmt(nom)}</b></div><div><span>Brancos</span><b>${fmt(s[3])}</b></div><div><span>Nulos</span><b>${fmt(s[4])}</b></div>
+        ${isVereador()?`<div><span>Legenda</span><b>${fmt(s[5])}</b></div>`:''}
+      </div>
+      ${lista.map(([n,q])=>{const c=E.cands[n];return `<div class="bu-linha${estado.candidato===n?' dest':''}">
+        <span class="n">${n}</span><span class="nm">${c.leg?'Legenda ':''}${esc(c.u)}${!c.leg&&c.p?`<small>${esc(c.p)}</small>`:''}</span><span class="q">${fmt(q)}</span></div>`}).join('')}
+    </div></details>`;
+}
+
+function cabecalho(){
+  const R=agregados(estado.eleicao),E=R.E;
+  const trilha=[];
+  if(estado.nivel!=='cidade'){
+    const destino=estado.nivel==='local'&&estado.bairro?BAIRRO[estado.bairro].nome:'Juazeiro';
+    trilha.push(`<button class="voltar" data-voltar><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>${esc(destino)}</button>`);
+    trilha.push(`<button class="ao-inicio" data-inicio aria-label="Voltar ao início (Juazeiro inteira)" title="Voltar ao início">✕</button>`);
+  }
+  let sobre,tit,sub;
+  if(modoComparar())({sobre,tit,sub}=cabecalhoComparar());
+  else if(estado.nivel==='cidade'){
+    sobre='Juazeiro · Bahia';tit=E.titulo;
+    sub=`${fmt(R.cidade.urnas)} urnas em ${R.cidade.locais.size} locais de votação`;
+  }else if(estado.nivel==='bairro'){
+    const b=BAIRRO[estado.bairro],T=R.bairros[estado.bairro];
+    sobre=b.tipo==='bairro'?'Bairro':b.tipo==='distrito'?'Distrito':'Povoado';tit=b.nome;
+    sub=T?`${T.locais.size} local(is) · ${T.urnas} urnas · ${E.titulo}`:E.titulo;
+  }else{
+    const l=R.L[estado.local],T=R.locais[estado.local];
+    sobre=`Local de votação · Zona ${estado.local.split('-')[0]}`;tit=l.n;sub=l.e;
+  }
+  return `${estado.nivel==='cidade'?abasModo():''}${trilha.length?`<nav class="trilha" aria-label="Navegação">${trilha.join('')}</nav>`:''}
+    <p class="sobre">${esc(sobre)}</p><h2 id="titulo-painel">${esc(tit)}</h2><p class="sub">${esc(sub)}</p>`;
+}
+
+function atualizarPainel(){
+  $('#painel-cab').innerHTML=cabecalho();
+  const corpo=$('#painel-corpo');
+  if(modoComparar()){
+    corpo.innerHTML=estado.nivel==='cidade'||!cmpPronto()?htmlCompararCidade():estado.nivel==='bairro'?htmlCompararBairro(estado.bairro):htmlCompararLocal(estado.local);
+    ligarBuscaComparar();return;
+  }
+  corpo.innerHTML=estado.nivel==='cidade'?htmlCidade():estado.nivel==='bairro'?htmlBairro(estado.bairro):htmlLocal(estado.local);
+  ligarBusca();
+}
+let ultimoNivel='';
+function atualizar(){
+  const chaveNivel=estado.modo+estado.nivel+estado.bairro+estado.local+estado.eleicao;
+  if(modoComparar()&&cmpPronto())cmpCalcularEscalas();
+  const rolar=chaveNivel!==ultimoNivel;ultimoNivel=chaveNivel;
+  const topo=$('#painel-corpo').scrollTop;
+  atualizarPainel();
+  if(rolar)$('#painel-corpo').scrollTop=0;else $('#painel-corpo').scrollTop=topo;
+  estilizarBairros();desenharLocais();atualizarLegenda();
+  $('#chip-inicio').hidden=estado.nivel==='cidade';
+  $('#eleicao').classList.toggle('inativo',modoComparar());
+}
+
+/* Busca de vereador */
+function ligarBusca(){
+  const inp=$('#busca'),ul=$('#sugestoes');if(!inp)return;
+  const R=agregados(estado.eleicao),E=R.E;
+  const todos=Object.entries(E.cands).filter(([,c])=>!c.leg).map(([n,c])=>[n,c,R.cidade.v[n]||0]).sort((a,b)=>b[2]-a[2]);
+  inp.addEventListener('input',()=>{
+    const t=semAcento(inp.value.trim());
+    if(t.length<2&&!/^\d+$/.test(t)){ul.hidden=true;return}
+    const r=todos.filter(([n,c])=>n.startsWith(t)||semAcento(c.u).includes(t)||semAcento(c.n||'').includes(t)).slice(0,12);
+    ul.innerHTML=r.length?r.map(([n,c,q])=>`<li><button data-candidato="${n}"><span>${esc(c.u)} <small>${esc(c.p)} · ${n}</small></span><small>${fmt(q)} votos</small></button></li>`).join('')
+      :'<li style="padding:10px;color:var(--suave)">Nenhum candidato encontrado</li>';
+    ul.hidden=false;
+    if(!DESKTOP())fixarBusca(inp);
+  });
+  /* Celular: ao digitar, o painel sobe, o cabeçalho recolhe e a busca fica no topo, acima do teclado */
+  inp.addEventListener('focus',()=>{
+    if(DESKTOP())return;
+    clearTimeout(timerBusca);
+    $('#painel').classList.add('buscando');folha('cima');
+    setTimeout(()=>fixarBusca(inp),60);setTimeout(()=>fixarBusca(inp),350);
+  });
+  inp.addEventListener('blur',()=>{
+    // espera o toque na sugestão ser processado antes de reorganizar o painel
+    timerBusca=setTimeout(()=>{$('#painel').classList.remove('buscando');if(!inp.value)ul.hidden=true},300);
+  });
+}
+let timerBusca=null;
+function fixarBusca(inp){
+  const corpo=$('#painel-corpo'),caixa=inp.closest('.busca');
+  corpo.scrollTop+=caixa.getBoundingClientRect().top-corpo.getBoundingClientRect().top-8;
+}
+if(window.visualViewport)visualViewport.addEventListener('resize',()=>{
+  const inp=$('#busca');if(inp&&document.activeElement===inp&&!DESKTOP())fixarBusca(inp);
+});
+
+/* Cliques no painel (delegação) */
+$('#painel').addEventListener('click',e=>{
+  const t=e.target.closest('button');if(!t)return;
+  if('voltar' in t.dataset)return voltar();
+  if('inicio' in t.dataset)return voltarAoInicio();
+  if(t.dataset.bairro)return irBairro(t.dataset.bairro);
+  if(t.dataset.local)return irLocal(t.dataset.local);
+  if(t.dataset.candidato){clearTimeout(timerBusca);$('#painel').classList.remove('buscando');escolherCandidato(t.dataset.candidato);return}
+  if('limpar' in t.dataset){estado.candidato=null;atualizar();return}
+  if('verTodos' in t.dataset){estado.verTodos=!estado.verTodos;atualizar();return}
+  if('verEleitos' in t.dataset){estado.verEleitos=!estado.verEleitos;atualizar();return}
+  if(t.dataset.ordem){estado.ordemBairros=t.dataset.ordem;atualizar();return}
+  if(t.dataset.colorir){const k='cand:'+t.dataset.colorir;estado.colorir=estado.colorir===k?'vencedor':k;$('#colorir').value=estado.colorir;atualizar();return}
+});
+
+/* ══════════════════════════════════════════════════════════
+   Legenda e camadas
+══════════════════════════════════════════════════════════ */
+function atualizarLegenda(){
+  if(modoComparar()){legendaComparar();return}
+  const R=agregados(estado.eleicao),E=R.E,m=modoCor(),sel=$('#colorir');
+  if(isVereador()){
+    sel.innerHTML=`<option value="x">${estado.candidato?'% do candidato escolhido':'Comparecimento'}</option>`;sel.disabled=true;
+  }else{
+    sel.disabled=false;
+    const top=ordenar(R.cidade.v).slice(0,6);
+    sel.innerHTML=`<option value="vencedor">Quem venceu</option>`+top.map(([n])=>`<option value="cand:${n}">% de ${esc(E.cands[n].u)}</option>`).join('')+`<option value="comparecimento">Comparecimento</option>`;
+    sel.value=estado.colorir;if(sel.value!==estado.colorir){estado.colorir='vencedor';sel.value='vencedor'}
+  }
+  let itens='',dica='',amostras='';
+  if(m.tipo==='vencedor'){
+    const venc=new Set(Object.values(R.bairros).map(T=>vencedor(T,E)?.n).filter(Boolean));
+    const lista=ordenar(R.cidade.v).filter(([n])=>venc.has(n));
+    itens=lista.map(([n])=>`<div><i style="background:${corCand(n)}"></i>${esc(E.cands[n].u)}</div>`).join('');
+    amostras=lista.map(([n])=>`<i style="background:${corCand(n)}"></i>`).join('');
+    dica='Cor mais forte = vantagem maior. Ponto = local de votação, tamanho pelo nº de votos.';
+  }else if(m.tipo==='candidato'){
+    itens=`<div class="leg-grad" style="background:linear-gradient(90deg,transparent,${m.cor})"></div><div class="leg-escala"><span>0%</span><span>${pct(m.max,0)} dos válidos</span></div>`;
+    amostras=`<i style="background:${m.cor}"></i>`;
+    dica=`Bairros pela fatia de votos de ${esc(E.cands[m.n].u)}. Pontos pelo nº de votos dele em cada local.`;
+  }else{
+    itens=`<div class="leg-grad" style="background:linear-gradient(90deg,rgba(34,184,207,.1),#22b8cf)"></div><div class="leg-escala"><span>${pct(m.min,0)}</span><span>${pct(m.max,0)}</span></div>`;
+    amostras=`<i style="background:#22b8cf"></i>`;
+    dica=isVereador()?'Escolha um candidato para ver onde ele foi mais votado.':'Percentual de eleitores aptos que votaram.';
+  }
+  $('#leg-itens').innerHTML=`<div class="leg-itens">${itens}</div>`;
+  $('#leg-dica').textContent=dica;
+  $('#leg-amostras').innerHTML=amostras;
+}
+$('#colorir').addEventListener('change',e=>{const v=e.target.value;if(v.startsWith('cmp:'))CMP.metrica=v.slice(4);else estado.colorir=v;atualizar()});
+function legendaAberta(abrir){const l=$('#legenda');l.classList.toggle('aberta',abrir);$('#leg-botao').setAttribute('aria-expanded',abrir)}
+$('#leg-botao').addEventListener('click',()=>legendaAberta(!$('#legenda').classList.contains('aberta')));
+/* No celular, a legenda aberta cobre o mapa: o primeiro toque fora dela só a fecha */
+document.addEventListener('pointerdown',e=>{
+  if(DESKTOP()||!$('#legenda').classList.contains('aberta')||e.target.closest('#legenda'))return;
+  legendaAberta(false);
+  if(e.target.closest('#map')){
+    const parar=ev=>{ev.stopPropagation();ev.preventDefault()};
+    document.addEventListener('click',parar,{capture:true,once:true});
+    setTimeout(()=>document.removeEventListener('click',parar,{capture:true}),600);
+  }
+},true);
+document.querySelectorAll('[data-camada]').forEach(b=>b.addEventListener('click',()=>{
+  const k=b.dataset.camada;estado[k]=!estado[k];b.setAttribute('aria-pressed',estado[k]);
+  estilizarBairros();desenharLocais();
+}));
+
+/* Seletor de eleição */
+const pedidos={};
+function carregarEleicao(ch){
+  if(D.eleicoes[ch])return Promise.resolve();
+  return pedidos[ch]||(pedidos[ch]=fetch(`eleicoes/${ch}.json`).then(r=>{if(!r.ok)throw new Error(r.status);return r.json()})
+    .then(e=>{D.eleicoes[ch]=e}).catch(err=>{delete pedidos[ch];throw err}));
+}
+$('#eleicao').addEventListener('change',e=>{
+  const nova=e.target.value,sel=e.target;
+  if(!D.eleicoes[nova])$('#painel-corpo').innerHTML=`<p class="carregando">Carregando ${esc(D.indice[nova].titulo)}…</p>`;
+  carregarEleicao(nova).then(()=>{
+    if(sel.value!==nova)return;
+    estado.modo='eleicao';estado.eleicao=nova;estado.colorir='vencedor';estado.candidato=null;estado.verTodos=false;estado.verEleitos=false;
+    if(estado.nivel==='local'&&!agregados(nova).locais[estado.local]){estado.nivel=estado.bairro?'bairro':'cidade';estado.local=null}
+    if(estado.nivel==='bairro'&&!estado.bairro)estado.nivel='cidade';
+    atualizar();
+  }).catch(()=>{
+    sel.value=estado.eleicao;
+    $('#painel-corpo').innerHTML='<div class="bloco"><p class="vazio">Não foi possível carregar esta eleição. Verifique a conexão e escolha de novo.</p></div>';
+  });
+});
+
+/* ══════════════════════════════════════════════════════════
+   Folha deslizante (celular)
+══════════════════════════════════════════════════════════ */
+let estadoFolha='baixo';
+function alturaFolha(){
+  if(DESKTOP())return 0;
+  const h=$('.app').clientHeight;
+  return estadoFolha==='baixo'?Math.min(170,h*.3):estadoFolha==='meio'?h*.52:h-8;
+}
+function folha(s){
+  if(DESKTOP())return;
+  if(s==='meio'&&estadoFolha==='cima')return;
+  estadoFolha=s;$('#painel').style.setProperty('--folha-visivel',alturaFolha()+'px');
+}
+(function arrastar(){
+  const p=$('#painel');let y0=null,h0=0;
+  const ini=e=>{if(DESKTOP())return;y0=e.clientY;h0=alturaFolha();p.classList.add('arrastando');e.target.setPointerCapture?.(e.pointerId)};
+  const mov=e=>{if(y0===null)return;const h=Math.max(120,Math.min($('.app').clientHeight-8,h0+(y0-e.clientY)));p.style.setProperty('--folha-visivel',h+'px')};
+  const fim=e=>{if(y0===null)return;const dy=y0-e.clientY;p.classList.remove('arrastando');y0=null;
+    const ordem=['baixo','meio','cima'],i=ordem.indexOf(estadoFolha);
+    if(Math.abs(dy)<8){folha(ordem[(i+1)%3]);return}
+    folha(dy>0?ordem[Math.min(2,i+(dy>200?2:1))]:ordem[Math.max(0,i-(dy<-200?2:1))]);};
+  for(const el of [$('#alca')]){el.addEventListener('pointerdown',ini);el.addEventListener('pointermove',mov);el.addEventListener('pointerup',fim);el.addEventListener('pointercancel',fim)}
+  const cab=$('#painel-cab');
+  cab.addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;ini(e)});
+  cab.addEventListener('pointermove',mov);cab.addEventListener('pointerup',fim);cab.addEventListener('pointercancel',fim);
+})();
+addEventListener('resize',()=>folha(estadoFolha));
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape')return;
+  if($('#legenda').classList.contains('aberta')){legendaAberta(false);return}
+  if(estado.nivel!=='cidade')voltar();
+});
+/* Tocar numa área vazia do mapa sobe um nível */
+map.on('click',()=>{if(estado.nivel!=='cidade')voltar()});
+$('#chip-inicio').addEventListener('click',voltarAoInicio);
+
+/* ══════════════════════════════════════════════════════════
+   Início
+══════════════════════════════════════════════════════════ */
+folha('baixo');
+fetch('dados.json').then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}).then(d=>{
+  D=d;D.eleicoes={};
+  return carregarEleicao(estado.eleicao);
+}).then(()=>{
+  montarMapa();atualizar();atualizarRotulos();
+  map.fitBounds(L.latLngBounds([[-9.475,-40.56],[-9.39,-40.455]]),DESKTOP()?{paddingBottomRight:[260,0]}:{paddingTopLeft:[10,50],paddingBottomRight:[10,alturaFolha()]});
+}).catch(()=>{
+  $('#painel-corpo').innerHTML='<div class="bloco"><p class="vazio">Não foi possível carregar os resultados. Recarregue a página para tentar de novo.</p></div>';
+});
+
+/* ══════════════════════════════════════════════════════════
+   Comparar candidatos entre eleições (mesmo de cargos diferentes)
+   A comparação é feita por local de votação (o código do local se mantém entre eleições)
+   e somada por bairro e cidade. Urnas não são comparadas: a numeração muda a cada eleição.
+══════════════════════════════════════════════════════════ */
+const CMP={a:{el:'2024_VEREADOR',n:'13140'},b:{el:'2026_DEPUTADO_FEDERAL',n:'1361'},metrica:'razao'};
+const COR_A='#22b8cf',COR_B='#f2b33d',SOBE='#3fbf7f',DESCE='#f0645c';
+const METRICAS={razao:'Retenção (B ÷ A)',dif:'Diferença de votos',pp:'Diferença em % dos válidos'};
+const modoComparar=()=>estado.modo==='comparar';
+const cmpPronto=()=>!!(CMP.a.n&&CMP.b.n&&D.eleicoes[CMP.a.el]&&D.eleicoes[CMP.b.el]);
+const cmpCand=s=>D.eleicoes[CMP[s].el].cands[CMP[s].n];
+let cmpEscalas={bairros:1,locais:1};
+
+function cmpVotos(s,nivel,id){
+  const R=agregados(CMP[s].el),T=nivel==='cidade'?R.cidade:R[nivel][id];
+  if(!T)return {v:0,val:0,existe:false};
+  return {v:T.v[CMP[s].n]||0,val:validos(T),existe:true};
+}
+function cmpPar(nivel,id){
+  const a=cmpVotos('a',nivel,id),b=cmpVotos('b',nivel,id);
+  const pa=a.val?a.v/a.val*100:0,pb=b.val?b.v/b.val*100:0;
+  return {a,b,pa,pb,razao:a.v?b.v/a.v:(b.v?Infinity:null),dif:b.v-a.v,pp:pb-pa};
+}
+function cmpUnidades(nivel){
+  return [...new Set([...Object.keys(agregados(CMP.a.el)[nivel]),...Object.keys(agregados(CMP.b.el)[nivel])])];
+}
+function cmpCalcularEscalas(){
+  for(const nivel of ['bairros','locais']){
+    const xs=cmpUnidades(nivel).map(id=>{const p=cmpPar(nivel,id);return Math.abs(CMP.metrica==='dif'?p.dif:p.pp)});
+    cmpEscalas[nivel]=Math.max(...xs,1e-6);
+  }
+}
+/* -1 (caiu muito) … 0 (igual) … +1 (cresceu muito); null = nenhum dos dois teve votos */
+function cmpIntensidade(p,nivel){
+  if(CMP.metrica==='razao'){
+    if(p.razao===null)return null;
+    // com poucos votos a razão oscila muito (de 2 para 6 já é ×3): a cor é atenuada abaixo de 30 votos
+    const peso=Math.min(1,Math.max(p.a.v,p.b.v)/30);
+    if(p.razao===Infinity)return peso;
+    if(p.razao===0)return -peso;
+    return Math.max(-1,Math.min(1,Math.log2(p.razao)/2))*peso;   // ×4 ou ÷4 satura a cor
+  }
+  if(!p.a.v&&!p.b.v)return null;
+  return Math.max(-1,Math.min(1,(CMP.metrica==='dif'?p.dif:p.pp)/cmpEscalas[nivel]));
+}
+const cmpCor=t=>t===null?'#6b7486':t>=0?SOBE:DESCE;
+function cmpFmtRazao(p){
+  if(p.razao===null)return '—';
+  if(p.razao===Infinity)return 'só B';
+  return pct(p.razao*100,0);
+}
+function cmpValor(p){
+  if(CMP.metrica==='razao')return cmpFmtRazao(p);
+  if(CMP.metrica==='dif')return (p.dif>0?'+':'')+fmt(p.dif);
+  return (p.pp>0?'+':'')+p.pp.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})+' p.p.';
+}
+
+/* ── Mapa ── */
+function estiloComparar(id){
+  const sel=estado.bairro===id,algumSel=!!estado.bairro;
+  if(!estado.camadaBairros)return {stroke:false,fill:false};
+  const p=cmpPar('bairros',id);
+  if(!p.a.existe&&!p.b.existe)return {color:'#6b7486',weight:sel?2.5:.8,opacity:sel?1:.6,dashArray:'3 4',fill:true,fillColor:'#0b0e13',fillOpacity:sel?.25:.02};
+  const t=cmpIntensidade(p,'bairros'),cor=cmpCor(t),op=t===null?.04:.1+.6*Math.abs(t);
+  return {color:sel?'#ffffff':cor,weight:sel?3:1,opacity:sel?1:.8,dashArray:null,fill:true,fillColor:cor,fillOpacity:algumSel&&!sel?op*.45:op};
+}
+function desenharLocaisComparar(){
+  const ids=cmpUnidades('locais'),pares=ids.map(id=>[id,cmpPar('locais',id)]);
+  const mx=Math.max(...pares.map(([,p])=>Math.max(p.a.v,p.b.v)),1);
+  for(const [lid,p] of pares){
+    const l=infoLocal(lid);if(!l||!l.p)continue;
+    const v=Math.max(p.a.v,p.b.v),t=cmpIntensidade(p,'locais'),sel=estado.local===lid,fora=estado.bairro&&l.b!==estado.bairro;
+    const c=L.circleMarker([l.p[1],l.p[0]],{pane:'locais',radius:v>0?Math.max(4,Math.sqrt(v/mx)*17):3.5,
+      color:sel?'#fff':'#0b0e13',weight:sel?3:1.4,fillColor:cmpCor(t),fillOpacity:fora?.35:.95,opacity:fora?.5:1});
+    c.on('click',e=>{L.DomEvent.stopPropagation(e);irLocal(lid)});
+    if(PASSAR_MOUSE)c.bindTooltip(()=>cmpDica(l.n,p),{className:'dica-mapa',direction:'top',offset:[0,-6]});
+    c.addTo(map);camadas.locais[lid]=c;
+  }
+}
+function cmpDica(nome,p){
+  return `<b>${esc(nome)}</b><br><span style="color:${COR_A}">●</span> ${esc(cmpCand('a').u)}: <b>${fmt(p.a.v)}</b>
+    <br><span style="color:${COR_B}">●</span> ${esc(cmpCand('b').u)}: <b>${fmt(p.b.v)}</b><br><span class="x">${METRICAS[CMP.metrica]}: </span><b>${cmpValor(p)}</b>`;
+}
+function infoLocal(lid){
+  if(modoComparar()&&cmpPronto())
+    return D.anos[D.eleicoes[CMP.b.el].ano].locais[lid]||D.anos[D.eleicoes[CMP.a.el].ano].locais[lid];
+  return agregados(estado.eleicao).L[lid];
+}
+
+/* ── Painel ── */
+function cmpSlot(s){
+  const nome=s==='a'?'A · base':'B · comparação',cor=s==='a'?COR_A:COR_B,X=CMP[s];
+  const opcoes=Object.entries(D.indice).map(([k,i])=>`<option value="${k}"${k===X.el?' selected':''}>${esc(i.titulo)}</option>`).join('');
+  let corpo;
+  if(X.n&&D.eleicoes[X.el]){
+    const c=cmpCand(s),tot=agregados(X.el).cidade.v[X.n]||0;
+    corpo=`<div class="slot-cand"><div><b>${esc(c.u)}</b><small>${esc(c.p)} · nº ${X.n}${c.s?' · '+esc(c.s):''}</small></div>
+      <button class="slot-trocar" data-cmp-trocar="${s}">Trocar</button></div>`;
+  }else{
+    corpo=`<div class="busca"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="busca-${s}" data-cmp-busca="${s}" type="search" autocomplete="off" placeholder="Nome ou número do candidato" aria-label="Buscar candidato ${s.toUpperCase()}"></div>
+      <ul class="sugestoes" id="sug-${s}" hidden></ul>`;
+  }
+  return `<div class="slot" style="--slot:${cor}">
+    <p class="slot-tit"><i></i>${nome}</p>
+    <select data-cmp-eleicao="${s}" aria-label="Eleição do candidato ${s.toUpperCase()}">${opcoes}</select>
+    ${corpo}</div>`;
+}
+function cmpMetricas(){
+  return `<div class="ordem metricas" role="group" aria-label="Métrica de comparação">${Object.entries(METRICAS).map(([k,t])=>
+    `<button data-cmp-metrica="${k}" aria-pressed="${CMP.metrica===k}">${k==='razao'?'Retenção':k==='dif'?'Diferença':'% válidos'}</button>`).join('')}</div>`;
+}
+function cmpResumo(nivel,id){
+  const p=cmpPar(nivel,id),A=cmpCand('a'),B=cmpCand('b');
+  let frase;
+  if(p.razao===null)frase='Nenhum dos dois teve votos aqui.';
+  else if(p.razao===Infinity)frase=`${esc(B.u)} teve votos aqui e ${esc(A.u)} não.`;
+  else frase=`${esc(B.u)} teve <b>${fmt(Math.round(p.razao*100))}</b> votos para cada <b>100</b> de ${esc(A.u)}.`;
+  const tCor=cmpCor(cmpIntensidade(p,nivel==='cidade'?'bairros':nivel));
+  return `<div class="duelo">
+      <div style="--slot:${COR_A}"><span>${esc(A.u)} <small>${esc(D.indice[CMP.a.el].titulo)}</small></span><b>${fmt(p.a.v)}</b><em>${pct(p.pa,2)} dos válidos</em></div>
+      <div style="--slot:${COR_B}"><span>${esc(B.u)} <small>${esc(D.indice[CMP.b.el].titulo)}</small></span><b>${fmt(p.b.v)}</b><em>${pct(p.pb,2)} dos válidos</em></div>
+    </div>
+    <div class="veredito" style="--t:${tCor}">
+      <div><span>Retenção</span><b>${cmpFmtRazao(p)}</b></div>
+      <div><span>Diferença</span><b>${p.dif>0?'+':''}${fmt(p.dif)}</b></div>
+      <div><span>% válidos</span><b>${p.pp>0?'+':''}${p.pp.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})} p.p.</b></div>
+    </div>
+    <p class="nota" style="margin:10px 2px 0">${frase}</p>`;
+}
+function pearson(xs,ys){
+  const n=xs.length;if(n<3)return null;
+  const mx=xs.reduce((a,b)=>a+b,0)/n,my=ys.reduce((a,b)=>a+b,0)/n;
+  let sxy=0,sx=0,sy=0;for(let i=0;i<n;i++){const dx=xs[i]-mx,dy=ys[i]-my;sxy+=dx*dy;sx+=dx*dx;sy+=dy*dy}
+  return sx&&sy?sxy/Math.sqrt(sx*sy):null;
+}
+function cmpDispersao(ids){
+  const pts=ids.map(id=>[id,cmpPar('locais',id)]).filter(([,p])=>p.a.v||p.b.v);
+  if(pts.length<2)return '';
+  const r=pearson(pts.map(([,p])=>p.a.v),pts.map(([,p])=>p.b.v));
+  const mx=Math.max(...pts.map(([,p])=>Math.max(p.a.v,p.b.v)));
+  const W=320,H=250,m={l:40,r:12,t:12,b:38},w=W-m.l-m.r,h=H-m.t-m.b;
+  const X=v=>m.l+v/mx*w,Y=v=>m.t+h-v/mx*h;
+  const passo=Math.pow(10,Math.floor(Math.log10(mx)));const tick=mx/passo>5?passo*2:mx/passo>2?passo:passo/2;
+  let grade='';for(let v=0;v<=mx;v+=tick){grade+=`<line x1="${m.l}" x2="${W-m.r}" y1="${Y(v)}" y2="${Y(v)}" class="g"/><text x="${m.l-6}" y="${Y(v)+3}" text-anchor="end">${fmt(v)}</text><text x="${X(v)}" y="${H-m.b+14}" text-anchor="middle">${fmt(v)}</text>`}
+  const leitura=r===null?'':r>=.7?'os votos vieram, em boa parte, dos mesmos colégios':r>=.4?'as bases se sobrepõem em parte':'as bases são bem diferentes';
+  return `<div class="bloco"><p class="bloco-tit"><span>Colégio a colégio</span><small>${pts.length} locais</small></p>
+    <svg class="dispersao" viewBox="0 0 ${W} ${H}" role="img" aria-label="Votos de A (eixo horizontal) contra votos de B (eixo vertical) em cada local de votação">
+      ${grade}
+      <line x1="${X(0)}" y1="${Y(0)}" x2="${X(mx)}" y2="${Y(mx)}" class="diag"/>
+      <text x="${X(mx)-4}" y="${Y(mx)+14}" text-anchor="end" class="diag-t">mesma votação</text>
+      ${pts.map(([id,p])=>`<circle data-local="${id}" cx="${X(p.a.v).toFixed(1)}" cy="${Y(p.b.v).toFixed(1)}" r="${estado.local===id?6:4.2}" fill="${cmpCor(cmpIntensidade(p,'locais'))}"${estado.local===id?' stroke="#fff" stroke-width="2"':''}><title>${esc(infoLocal(id)?.n||id)}: A ${fmt(p.a.v)} · B ${fmt(p.b.v)}</title></circle>`).join('')}
+      <text x="${m.l+w/2}" y="${H-4}" text-anchor="middle" class="eixo" fill="${COR_A}">${esc(cmpCand('a').u)} (A)</text>
+      <text transform="translate(11 ${m.t+h/2}) rotate(-90)" text-anchor="middle" class="eixo" fill="${COR_B}">${esc(cmpCand('b').u)} (B)</text>
+    </svg>
+    ${r!==null?`<p class="nota" style="margin:8px 2px 0">Correlação entre os dois: <b>${r.toLocaleString('pt-BR',{maximumFractionDigits:2})}</b> (de −1 a 1): ${leitura}. Pontos acima da linha: B teve mais votos que A naquele local. Toque num ponto para abrir o colégio.</p>`:''}
+  </div>`;
+}
+function cmpLinhas(nivel,ids,{titulo,destino}){
+  const pares=ids.map(id=>[id,cmpPar(nivel,id)]).filter(([,p])=>p.a.v||p.b.v);
+  const chave=([,p])=>CMP.metrica==='razao'?(p.razao===Infinity?1e9:p.razao??-1):CMP.metrica==='dif'?p.dif:p.pp;
+  const poucos=([,p])=>CMP.metrica==='razao'&&Math.max(p.a.v,p.b.v)<15;   // razão de números pequenos vai para o fim
+  pares.sort((x,y)=>(poucos(x)-poucos(y))||(chave(y)-chave(x)));
+  const mx=Math.max(...pares.map(([,p])=>Math.max(p.a.v,p.b.v)),1);
+  const nome=id=>nivel==='bairros'?BAIRRO[id].nome:(infoLocal(id)?.n||id);
+  const cresceu=pares.filter(([,p])=>p.b.v>p.a.v).length;
+  return `<div class="bloco"><p class="bloco-tit"><span>${titulo}</span><small>B à frente em ${cresceu} de ${pares.length}</small></p>
+    <div class="itens">${pares.map(([id,p])=>`<button class="item cmp-item" data-${destino}="${esc(id)}">
+      <span class="t">${esc(nome(id))}</span><span class="v"><b style="color:${cmpCor(cmpIntensidade(p,nivel==='cidade'?'bairros':nivel))}">${cmpValor(p)}</b></span>
+      <span class="duas"><i style="width:${p.a.v/mx*100}%;background:${COR_A}"></i><i style="width:${p.b.v/mx*100}%;background:${COR_B}"></i></span>
+      <span class="nums"><span style="color:${COR_A}">A ${fmt(p.a.v)}</span><span style="color:${COR_B}">B ${fmt(p.b.v)}</span>${poucos([id,p])?'<span style="color:var(--fraco)">poucos votos</span>':''}</span>
+    </button>`).join('')}</div></div>`;
+}
+function htmlCompararCidade(){
+  let h=`<div class="bloco slots">${cmpSlot('a')}${cmpSlot('b')}</div>`;
+  if(!cmpPronto())return h+`<div class="bloco"><p class="vazio">Escolha a eleição e o candidato de cada lado. Vale comparar cargos diferentes, como um vereador de 2024 com um deputado de 2026 do mesmo grupo político.</p></div>`;
+  h+=`<div class="bloco"><p class="bloco-tit"><span>Juazeiro inteira</span>${cmpMetricas()}</p>${cmpResumo('cidade')}</div>`;
+  h+=cmpDispersao(cmpUnidades('locais'));
+  h+=cmpLinhas('bairros',cmpUnidades('bairros'),{titulo:'Bairros e distritos',destino:'bairro'});
+  h+=`<div class="bloco"><p class="nota"><b>Como ler:</b> <b>retenção</b> é quantos votos B teve para cada 100 de A (acima de 100% = B foi melhor). <b>Diferença</b> mostra onde está o volume de votos ganho ou perdido. <b>% dos válidos</b> desconta o tamanho do eleitorado e do comparecimento de cada ano. A comparação é feita por local de votação, que mantém o mesmo código entre as eleições; urnas não são comparadas porque a numeração muda.</p></div>`;
+  return h;
+}
+function htmlCompararBairro(id){
+  const p=cmpPar('bairros',id);
+  if(!p.a.existe&&!p.b.existe)return `<div class="bloco"><p class="vazio">Nenhum local de votação fica dentro deste ${BAIRRO[id].tipo}.</p></div>`;
+  const ids=[...new Set([...(agregados(CMP.a.el).bairros[id]?.locais||[]),...(agregados(CMP.b.el).bairros[id]?.locais||[])])];
+  return `<div class="bloco"><p class="bloco-tit"><span>No ${BAIRRO[id].tipo}</span>${cmpMetricas()}</p>${cmpResumo('bairros',id)}</div>`
+    +cmpLinhas('locais',ids,{titulo:'Locais de votação',destino:'local'});
+}
+function htmlCompararLocal(lid){
+  const p=cmpPar('locais',lid);
+  let aviso='';
+  if(!p.a.existe)aviso=`Este local não existia em ${esc(D.indice[CMP.a.el].titulo)}.`;
+  else if(!p.b.existe)aviso=`Este local não existe em ${esc(D.indice[CMP.b.el].titulo)}.`;
+  return `${aviso?`<p class="nota" style="margin:12px 0 0">${aviso}</p>`:''}
+    <div class="bloco"><p class="bloco-tit"><span>Neste local</span>${cmpMetricas()}</p>${cmpResumo('locais',lid)}</div>
+    <div class="bloco"><p class="nota">Para ver os boletins de urna deste local, volte para <b>Resultados</b> e escolha a eleição no topo.</p></div>`;
+}
+function abasModo(){
+  return `<div class="abas" role="tablist">
+    <button role="tab" data-modo="eleicao" aria-selected="${!modoComparar()}">Resultados</button>
+    <button role="tab" data-modo="comparar" aria-selected="${modoComparar()}">Comparar candidatos</button></div>`;
+}
+function cabecalhoComparar(){
+  const pronto=cmpPronto();
+  const dupla=pronto?`${cmpCand('a').u} × ${cmpCand('b').u}`:'Comparar candidatos';
+  const eleicoes=`${D.indice[CMP.a.el].titulo} × ${D.indice[CMP.b.el].titulo}`;
+  if(estado.nivel==='cidade')return {sobre:'Comparação entre eleições',tit:dupla,sub:eleicoes};
+  if(estado.nivel==='bairro'){const b=BAIRRO[estado.bairro];return {sobre:b.tipo==='bairro'?'Bairro':b.tipo==='distrito'?'Distrito':'Povoado',tit:b.nome,sub:dupla}}
+  const l=infoLocal(estado.local);return {sobre:`Local de votação · Zona ${estado.local.split('-')[0]}`,tit:l.n,sub:dupla};
+}
+function legendaComparar(){
+  const sel=$('#colorir');
+  sel.disabled=false;
+  sel.innerHTML=Object.entries(METRICAS).map(([k,t])=>`<option value="cmp:${k}">${t}</option>`).join('');
+  sel.value='cmp:'+CMP.metrica;
+  let esc0,esc1;
+  if(CMP.metrica==='razao'){esc0='÷4 ou menos';esc1='×4 ou mais'}
+  else if(CMP.metrica==='dif'){esc0='−'+fmt(Math.round(cmpEscalas.bairros));esc1='+'+fmt(Math.round(cmpEscalas.bairros))}
+  else{const e=cmpEscalas.bairros.toLocaleString('pt-BR',{maximumFractionDigits:1});esc0='−'+e+' p.p.';esc1='+'+e+' p.p.'}
+  $('#leg-itens').innerHTML=`<div class="leg-grad" style="background:linear-gradient(90deg,${DESCE},rgba(107,116,134,.25),${SOBE})"></div>
+    <div class="leg-escala"><span>${esc0}</span><span>igual</span><span>${esc1}</span></div>`;
+  $('#leg-dica').textContent=cmpPronto()?`Verde: ${cmpCand('b').u} (B) foi melhor que ${cmpCand('a').u} (A). Vermelho: pior.`:'Escolha os dois candidatos no painel.';
+  $('#leg-amostras').innerHTML=`<i style="background:${DESCE}"></i><i style="background:${SOBE}"></i>`;
+}
+
+/* Interações do modo comparar */
+function cmpEntrar(){
+  estado.modo='comparar';
+  $('#painel-corpo').innerHTML='<p class="carregando">Carregando eleições…</p>';
+  Promise.all([carregarEleicao(CMP.a.el),carregarEleicao(CMP.b.el)]).then(atualizar)
+    .catch(()=>{$('#painel-corpo').innerHTML='<div class="bloco"><p class="vazio">Não foi possível carregar as eleições. Verifique a conexão e tente de novo.</p></div>'});
+}
+$('#painel').addEventListener('click',e=>{
+  const t=e.target.closest('[data-modo],[data-cmp-trocar],[data-cmp-metrica],[data-cmp-escolher],circle[data-local]');if(!t)return;
+  if(t.dataset.modo){
+    if(t.dataset.modo==='comparar'&&!modoComparar())cmpEntrar();
+    else if(t.dataset.modo==='eleicao'&&modoComparar()){estado.modo='eleicao';atualizar()}
+    return;
+  }
+  if(t.dataset.cmpTrocar){CMP[t.dataset.cmpTrocar].n=null;atualizar();setTimeout(()=>$('#busca-'+t.dataset.cmpTrocar)?.focus(),50);return}
+  if(t.dataset.cmpMetrica){CMP.metrica=t.dataset.cmpMetrica;atualizar();return}
+  if(t.dataset.cmpEscolher){const [s,n]=t.dataset.cmpEscolher.split(':');clearTimeout(timerBusca);$('#painel').classList.remove('buscando');CMP[s].n=n;atualizar();return}
+  if(t.tagName==='circle')irLocal(t.dataset.local);
+});
+$('#painel').addEventListener('change',e=>{
+  const s=e.target.dataset.cmpEleicao;if(!s)return;
+  const el=e.target.value;
+  carregarEleicao(el).then(()=>{CMP[s].el=el;CMP[s].n=null;atualizar();setTimeout(()=>$('#busca-'+s)?.focus(),50)});
+});
+function ligarBuscaComparar(){
+  for(const s of ['a','b']){
+    const inp=$('#busca-'+s),ul=$('#sug-'+s);if(!inp)continue;
+    const R=agregados(CMP[s].el),E=R.E;
+    const todos=Object.entries(E.cands).filter(([,c])=>!c.leg).map(([n,c])=>[n,c,R.cidade.v[n]||0]).sort((a,b)=>b[2]-a[2]);
+    const mostrar=()=>{
+      const t=semAcento(inp.value.trim());
+      const r=(t?todos.filter(([n,c])=>n.startsWith(t)||semAcento(c.u).includes(t)||semAcento(c.n||'').includes(t)):todos).slice(0,12);
+      ul.innerHTML=r.length?r.map(([n,c,q])=>`<li><button data-cmp-escolher="${s}:${n}"><span>${esc(c.u)} <small>${esc(c.p)} · ${n}</small></span><small>${fmt(q)} votos</small></button></li>`).join('')
+        :'<li style="padding:10px;color:var(--suave)">Nenhum candidato encontrado</li>';
+      ul.hidden=false;
+      if(!DESKTOP())fixarBusca(inp);
+    };
+    inp.addEventListener('input',mostrar);
+    inp.addEventListener('focus',()=>{
+      mostrar();
+      if(DESKTOP())return;
+      clearTimeout(timerBusca);$('#painel').classList.add('buscando');folha('cima');
+      setTimeout(()=>fixarBusca(inp),60);setTimeout(()=>fixarBusca(inp),350);
+    });
+    inp.addEventListener('blur',()=>{timerBusca=setTimeout(()=>{$('#painel').classList.remove('buscando')},300)});
+  }
+}
+
+</script>
