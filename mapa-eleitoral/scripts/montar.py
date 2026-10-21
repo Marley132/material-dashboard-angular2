@@ -20,8 +20,8 @@ corpo=r(A+'corpo.html')
 estilo=r(A+'estilo.css')
 if lab:
     # selo visível para não confundir a versão de testes com a principal
-    corpo=corpo.replace('<h1>Mapa Eleitoral</h1>','<h1>Mapa Eleitoral</h1><b class="selo-lab">Laboratório</b>')
-    estilo+='\n.selo-lab{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#0b0e13;background:#b07cff;border-radius:4px;padding:2px 6px;align-self:center}\n'
+    corpo=corpo.replace('<h1>Mapa Eleitoral</h1>','<h1>Mapa Eleitoral</h1><b class="selo-lab" title="Versão de testes">Lab</b>')
+    estilo+='\n.selo-lab{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#0b0e13;background:#b07cff;border-radius:4px;padding:2px 6px;align-self:center}\n@media(max-width:560px){.seletor select{max-width:52vw}}\n'
 html=f'''<meta charset="utf-8">
 <title>{titulo}</title>
 <meta name="claude:viewport-fit-sides" content="cover">

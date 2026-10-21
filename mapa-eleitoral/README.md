@@ -4,7 +4,7 @@ Página única com os resultados eleitorais de Juazeiro por bairro, local de vot
 (2020 a 2026), com comparação entre candidatos de eleições diferentes.
 
 - **Versão principal (publicada):** https://claude.ai/artifact/URTgBE3LH8xzQWeb1nPUyu
-- **Laboratório (testes de funções novas):** página separada; não altera a principal.
+- **Laboratório (testes de funções novas):** https://claude.ai/artifact/1SCM18sEZ3J6wGS65s3CsS — gerado com `montar.py <pasta> lab`, que inclui `app/lab.js`; usa os mesmos dados e não altera a principal.
 
 ## Pastas
 
