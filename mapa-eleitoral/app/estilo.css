@@ -274,3 +274,21 @@ details.mais p{margin:4px 8px 0;font-size:12px;color:var(--fraco);line-height:1.
 .ir-urnas b{background:var(--acento);color:#0b0e13;border-radius:10px;padding:0 7px;font-size:12px}
 .ir-urnas span{margin-left:auto;font-size:16px}
 .ir-urnas:hover{background:rgba(242,179,61,.2)}
+
+/* Comparação urna a urna */
+.cmp-urna .res{display:flex;gap:6px;align-items:baseline;flex-wrap:wrap;justify-content:flex-end}
+.cmp-urna .res b{font-weight:700;margin-left:4px}
+.alerta-urna{display:inline-block;margin-left:4px;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#f5a524;background:rgba(245,165,36,.12);border-radius:4px;padding:1px 5px}
+.cmp-tabela{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums;margin-bottom:6px}
+.cmp-tabela th,.cmp-tabela td{padding:6px 4px;border-bottom:1px solid var(--linha);text-align:right;white-space:nowrap}
+.cmp-tabela thead th{font-size:11px;font-weight:700;letter-spacing:.4px}
+.cmp-tabela tbody th{text-align:left;font-weight:500;color:var(--suave);white-space:normal}
+.cmp-tabela tbody tr:first-child td{font-weight:700;font-size:15px}
+.bu-completo{margin-top:8px;border-top:1px dashed var(--linha-2);padding-top:6px}
+.bu-completo>summary{cursor:pointer;font-size:12px;font-weight:600;padding:6px 0;list-style:none}
+.bu-completo>summary::-webkit-details-marker{display:none}
+.bu-completo>summary::before{content:"▸ "}
+.bu-completo[open]>summary::before{content:"▾ "}
+.bu-completo .bu{padding:6px 0 0}
+.bu-completo>summary::after{display:none}
+.bu-completo .bu-cab{margin-top:4px}

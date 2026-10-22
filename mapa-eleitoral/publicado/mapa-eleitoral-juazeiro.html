@@ -947,6 +947,24 @@ details.mais p{margin:4px 8px 0;font-size:12px;color:var(--fraco);line-height:1.
 .ir-urnas span{margin-left:auto;font-size:16px}
 .ir-urnas:hover{background:rgba(242,179,61,.2)}
 
+/* Comparação urna a urna */
+.cmp-urna .res{display:flex;gap:6px;align-items:baseline;flex-wrap:wrap;justify-content:flex-end}
+.cmp-urna .res b{font-weight:700;margin-left:4px}
+.alerta-urna{display:inline-block;margin-left:4px;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#f5a524;background:rgba(245,165,36,.12);border-radius:4px;padding:1px 5px}
+.cmp-tabela{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums;margin-bottom:6px}
+.cmp-tabela th,.cmp-tabela td{padding:6px 4px;border-bottom:1px solid var(--linha);text-align:right;white-space:nowrap}
+.cmp-tabela thead th{font-size:11px;font-weight:700;letter-spacing:.4px}
+.cmp-tabela tbody th{text-align:left;font-weight:500;color:var(--suave);white-space:normal}
+.cmp-tabela tbody tr:first-child td{font-weight:700;font-size:15px}
+.bu-completo{margin-top:8px;border-top:1px dashed var(--linha-2);padding-top:6px}
+.bu-completo>summary{cursor:pointer;font-size:12px;font-weight:600;padding:6px 0;list-style:none}
+.bu-completo>summary::-webkit-details-marker{display:none}
+.bu-completo>summary::before{content:"▸ "}
+.bu-completo[open]>summary::before{content:"▾ "}
+.bu-completo .bu{padding:6px 0 0}
+.bu-completo>summary::after{display:none}
+.bu-completo .bu-cab{margin-top:4px}
+
 </style>
 <header class="topo">
   <div class="marca"><span>Juazeiro · BA</span><h1>Mapa Eleitoral</h1></div>
@@ -1786,7 +1804,9 @@ fetch('dados.json').then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}
 /* ══════════════════════════════════════════════════════════
    Comparar candidatos entre eleições (mesmo de cargos diferentes)
    A comparação é feita por local de votação (o código do local se mantém entre eleições)
-   e somada por bairro e cidade. Urnas não são comparadas: a numeração muda a cada eleição.
+   e somada por bairro e cidade. Urnas são comparadas pelo mesmo número de seção no mesmo local:
+   de 2022 a 2026 quase todas se mantêm; em 2020 houve reorganização, então cada urna mostra se o
+   eleitorado mudou muito.
 ══════════════════════════════════════════════════════════ */
 const CMP={a:{el:'2024_VEREADOR',n:'13140'},b:{el:'2026_DEPUTADO_FEDERAL',n:'1361'},metrica:'razao'};
 const COR_A='#22b8cf',COR_B='#f2b33d',SOBE='#3fbf7f',DESCE='#f0645c';
@@ -1962,7 +1982,7 @@ function htmlCompararCidade(){
   h+=`<div class="bloco"><p class="bloco-tit"><span>Juazeiro inteira</span>${cmpMetricas()}</p>${cmpResumo('cidade')}</div>`;
   h+=cmpDispersao(cmpUnidades('locais'));
   h+=cmpLinhas('bairros',cmpUnidades('bairros'),{titulo:'Bairros e distritos',destino:'bairro'});
-  h+=`<div class="bloco"><p class="nota"><b>Como ler:</b> <b>retenção</b> é quantos votos B teve para cada 100 de A (acima de 100% = B foi melhor). <b>Diferença</b> mostra onde está o volume de votos ganho ou perdido. <b>% dos válidos</b> desconta o tamanho do eleitorado e do comparecimento de cada ano. A comparação é feita por local de votação, que mantém o mesmo código entre as eleições; urnas não são comparadas porque a numeração muda.</p></div>`;
+  h+=`<div class="bloco"><p class="nota"><b>Como ler:</b> <b>retenção</b> é quantos votos B teve para cada 100 de A (acima de 100% = B foi melhor). <b>Diferença</b> mostra onde está o volume de votos ganho ou perdido. <b>% dos válidos</b> desconta o tamanho do eleitorado e do comparecimento de cada ano. A comparação é feita por local de votação, que mantém o mesmo código entre as eleições. Na ficha de cada colégio dá para comparar urna a urna, pelo número da seção; a urna avisa quando o eleitorado dela mudou muito entre as eleições.</p></div>`;
   return h;
 }
 function htmlCompararBairro(id){
@@ -1979,19 +1999,77 @@ function htmlCompararLocal(lid){
   else if(!p.b.existe)aviso=`Este local não existe em ${esc(D.indice[CMP.b.el].titulo)}.`;
   return `${aviso?`<p class="nota" style="margin:12px 0 0">${aviso}</p>`:''}
     <div class="bloco"><p class="bloco-tit"><span>Neste local</span>${cmpMetricas()}</p>${cmpResumo('locais',lid)}</div>
-    ${cmpBoletins('a',lid)}${cmpBoletins('b',lid)}`;
+    ${cmpUrnas(lid)}`;
 }
-/* Boletins de urna de cada lado da comparação; o candidato do lado aparece destacado em cada urna */
-function cmpBoletins(s,lid){
-  const ch=CMP[s].el,R=agregados(ch),secoes=R.secoesPorLocal[lid]||[],l=R.L[lid];
-  const cab=`<p class="bloco-tit"><span style="color:${s==='a'?COR_A:COR_B}">Boletins · ${esc(D.indice[ch].titulo)}</span><small>${secoes.length} urna(s)</small></p>`;
-  if(!secoes.length||!l)return `<div class="bloco">${cab}<p class="nota">Este local não teve urnas nesta eleição.</p></div>`;
-  // htmlUrna lê a eleição e o candidato do estado; troca temporariamente para o lado s
+/* Executa fn como se a eleição e o candidato ativos fossem os do lado s (htmlUrna lê do estado) */
+function comLado(s,fn){
   const antes={eleicao:estado.eleicao,candidato:estado.candidato};
-  try{
-    estado.eleicao=ch;estado.candidato=CMP[s].n;
-    return `<div class="bloco">${cab}${secoes.map(sk=>htmlUrna(sk,R.E.secoes[sk],l)).join('')}</div>`;
-  }finally{estado.eleicao=antes.eleicao;estado.candidato=antes.candidato}
+  try{estado.eleicao=CMP[s].el;estado.candidato=CMP[s].n;return fn()}
+  finally{estado.eleicao=antes.eleicao;estado.candidato=antes.candidato}
+}
+function parUrna(sa,sb){
+  const lado=(s,ss)=>ss?{v:ss[6][CMP[s].n]||0,val:soma(ss[6]),existe:true}:{v:0,val:0,existe:false};
+  const a=lado('a',sa),b=lado('b',sb);
+  const pa=a.val?a.v/a.val*100:0,pb=b.val?b.v/b.val*100:0;
+  return {a,b,pa,pb,razao:a.v?b.v/a.v:(b.v?Infinity:null),dif:b.v-a.v,pp:pb-pa};
+}
+/* Urna a urna: mesma seção (zona + número) no mesmo local nas duas eleições */
+function cmpUrnas(lid){
+  const RA=agregados(CMP.a.el),RB=agregados(CMP.b.el);
+  const sa=RA.secoesPorLocal[lid]||[],sb=RB.secoesPorLocal[lid]||[];
+  const todas=[...new Set([...sa,...sb])].sort((x,y)=>+x.split('-')[1]-+y.split('-')[1]);
+  if(!todas.length)return '';
+  const tA=D.indice[CMP.a.el].titulo,tB=D.indice[CMP.b.el].titulo,anoA=D.indice[CMP.a.el].ano,anoB=D.indice[CMP.b.el].ano;
+  const linhas=todas.map(sk=>{
+    const A=sa.includes(sk)?RA.E.secoes[sk]:null,B=sb.includes(sk)?RB.E.secoes[sk]:null;
+    return {sk,A,B,p:parUrna(A,B),mud:A&&B?(B[1]-A[1])/A[1]:null};
+  });
+  const comparaveis=linhas.filter(x=>x.A&&x.B);
+  const frente=comparaveis.filter(x=>x.p.b.v>x.p.a.v).length;
+  const instaveis=comparaveis.filter(x=>Math.abs(x.mud)>.2).length;
+  const fmtPP=v=>(v>0?'+':'')+v.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1});
+  const corpo=linhas.map(({sk,A,B,p,mud})=>{
+    const [z,sec]=sk.split('-'),n=sec.padStart(4,'0');
+    let sub,alerta='';
+    if(!A)sub=`Só em ${anoB}: a seção não existia em ${anoA} neste local`;
+    else if(!B)sub=`Só em ${anoA}: a seção não existe em ${anoB} neste local`;
+    else{
+      sub=`Zona ${z} · aptos ${fmt(A[1])} → ${fmt(B[1])}`;
+      if(Math.abs(mud)>.2)alerta=`<span class="alerta-urna" title="O eleitorado desta urna mudou muito entre as eleições">eleitorado ${mud>0?'+':''}${Math.round(mud*100)}%</span>`;
+    }
+    const t=A&&B?cmpIntensidade(p,'locais'):null,cor=cmpCor(t);
+    // verde/vermelho só nos votos do candidato; nas demais linhas a diferença é neutra
+    const linha=(rotulo,va,vb,fmtv=fmt,dif=true,cor=false)=>{
+      const d=va!=null&&vb!=null&&dif?vb-va:null;
+      return `<tr><th>${rotulo}</th><td>${va==null?'—':fmtv(va)}</td><td>${vb==null?'—':fmtv(vb)}</td><td class="${cor&&d>0?'dif-sobe':cor&&d<0?'dif-desce':''}">${d==null?'':(d>0?'+':'')+fmtv(d)}</td></tr>`;
+    };
+    const pc=v=>pct(v,1);
+    const tabela=`<table class="cmp-tabela"><thead><tr><th></th><th style="color:${COR_A}">A · ${anoA}</th><th style="color:${COR_B}">B · ${anoB}</th><th>Diferença</th></tr></thead><tbody>
+      ${linha('Votos do candidato',A?p.a.v:null,B?p.b.v:null,fmt,true,true)}
+      ${linha('% dos válidos',A?p.pa:null,B?p.pb:null,v=>fmtPP(v).replace(/^\+/,'')+'%',false)}
+      ${linha('Aptos',A?A[1]:null,B?B[1]:null)}
+      ${linha('Votaram',A?A[2]:null,B?B[2]:null)}
+      ${linha('Comparecimento',A?A[2]/A[1]*100:null,B?B[2]/B[1]*100:null,pc,false)}
+      ${linha('Brancos',A?A[3]:null,B?B[3]:null)}
+      ${linha('Nulos',A?A[4]:null,B?B[4]:null)}
+    </tbody></table>`;
+    // só o corpo do boletim (sem a caixa recolhível própria da urna)
+    const corpoBU=h=>h.slice(h.indexOf('<div class="bu">'),h.lastIndexOf('</details>'));
+    const bA=A?corpoBU(comLado('a',()=>htmlUrna(sk,A,RA.L[lid]))):'',bB=B?corpoBU(comLado('b',()=>htmlUrna(sk,B,RB.L[lid]))):'';
+    return `<details class="urna cmp-urna"><summary>
+        <span class="sec">Seção ${n}</span>
+        <span class="res"><span style="color:${COR_A}">${A?fmt(p.a.v):'—'}</span> → <span style="color:${COR_B}">${B?fmt(p.b.v):'—'}</span>
+          ${A&&B?`<b style="color:${cor}">${cmpValor(p)}</b>`:''}</span>
+        <span class="sub">${sub} ${alerta}</span>
+      </summary><div class="bu">
+        ${tabela}
+        ${bA?`<details class="bu-completo"><summary style="color:${COR_A}">Boletim completo · ${esc(tA)}</summary>${bA}</details>`:''}
+        ${bB?`<details class="bu-completo"><summary style="color:${COR_B}">Boletim completo · ${esc(tB)}</summary>${bB}</details>`:''}
+      </div></details>`;
+  }).join('');
+  return `<div class="bloco"><p class="bloco-tit"><span>Urna a urna</span><small>${comparaveis.length} comparáveis · B à frente em ${frente}</small></p>
+    ${instaveis?`<p class="nota" style="margin:0 2px 10px">Em ${instaveis} urna(s) o eleitorado mudou mais de 20% entre as eleições; nelas, compare pelos percentuais, não pelo número de votos.</p>`:''}
+    ${corpo}</div>`;
 }
 function abasModo(){
   return `<div class="abas" role="tablist">
