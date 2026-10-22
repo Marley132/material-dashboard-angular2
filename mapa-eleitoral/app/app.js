@@ -610,6 +610,7 @@ function atualizarLegenda(){
 $('#colorir').addEventListener('change',e=>{const v=e.target.value;if(v.startsWith('cmp:'))CMP.metrica=v.slice(4);else estado.colorir=v;atualizar()});
 function legendaAberta(abrir){const l=$('#legenda');l.classList.toggle('aberta',abrir);$('#leg-botao').setAttribute('aria-expanded',abrir)}
 $('#leg-botao').addEventListener('click',()=>legendaAberta(!$('#legenda').classList.contains('aberta')));
+if(DESKTOP())legendaAberta(true);   // no computador começa aberta; no celular, recolhida
 /* No celular, a legenda aberta cobre o mapa: o primeiro toque fora dela só a fecha */
 document.addEventListener('pointerdown',e=>{
   if(DESKTOP()||!$('#legenda').classList.contains('aberta')||e.target.closest('#legenda'))return;

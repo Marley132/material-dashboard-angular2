@@ -840,17 +840,14 @@ details.mais p{margin:4px 8px 0;font-size:12px;color:var(--fraco);line-height:1.
 .bu-nota{font-size:12px;color:var(--acento);margin:0 0 10px}
 
 /* ── Mapa: legenda e controles ── */
-.legenda{position:absolute;z-index:900;top:12px;right:12px;width:250px;background:rgba(17,21,28,.94);backdrop-filter:blur(6px);
-  border:1px solid var(--linha-2);border-radius:12px;padding:12px;box-shadow:0 8px 24px rgba(0,0,0,.45)}
-@media(max-width:899px){.legenda{top:10px;right:max(10px,env(safe-area-inset-right,0px));width:auto;max-width:calc(100% - 20px);padding:0}}
-.leg-botao{display:none}
-@media(max-width:899px){
-  .leg-botao{display:flex;align-items:center;gap:8px;background:none;border:none;padding:9px 12px;font-weight:600;font-size:13px}
-  .leg-botao .amostras{display:flex;gap:3px}
-  .leg-botao .amostras i{width:10px;height:10px;border-radius:3px}
-  .legenda .leg-conteudo{display:none;padding:0 12px 12px;width:250px;max-width:calc(100vw - 40px)}
-  .legenda.aberta .leg-conteudo{display:block}
-}
+.legenda{position:absolute;z-index:900;top:12px;right:12px;width:auto;max-width:calc(100% - 24px);background:rgba(17,21,28,.94);backdrop-filter:blur(6px);
+  border:1px solid var(--linha-2);border-radius:12px;padding:0;box-shadow:0 8px 24px rgba(0,0,0,.45)}
+@media(max-width:899px){.legenda{top:10px;right:max(10px,env(safe-area-inset-right,0px));max-width:calc(100% - 20px)}}
+.leg-botao{display:flex;align-items:center;gap:8px;width:100%;justify-content:flex-start;background:none;border:none;padding:9px 12px;font-weight:600;font-size:13px}
+.leg-botao .amostras{display:flex;gap:3px}
+.leg-botao .amostras i{width:10px;height:10px;border-radius:3px}
+.legenda .leg-conteudo{display:none;padding:0 12px 12px;width:250px;max-width:calc(100vw - 40px)}
+.legenda.aberta .leg-conteudo{display:block}
 .leg-conteudo label{display:block;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--suave);margin-bottom:6px}
 .leg-conteudo select{width:100%;background:var(--painel-2);border:1px solid var(--linha-2);border-radius:8px;padding:7px 10px;font-size:13px;font-weight:600;margin-bottom:10px}
 .leg-itens{display:flex;flex-direction:column;gap:5px;font-size:12px}
@@ -937,12 +934,11 @@ details.mais p{margin:4px 8px 0;font-size:12px;color:var(--fraco);line-height:1.
 
 /* Botão da legenda: seta quando fechada, "Fechar ✕" quando aberta */
 .leg-fechar{display:none}
-@media(max-width:899px){
-  .leg-botao{width:100%;justify-content:flex-start}
-  .leg-seta{width:7px;height:7px;border-right:2px solid var(--suave);border-bottom:2px solid var(--suave);transform:rotate(45deg) translate(-2px,-2px);margin-left:2px}
-  .legenda.aberta .leg-seta{display:none}
-  .legenda.aberta .leg-fechar{display:inline-flex;margin-left:auto;background:var(--painel-2);border:1px solid var(--linha-2);border-radius:14px;padding:4px 10px;font-size:12px;color:var(--texto)}
-}
+.leg-seta{width:7px;height:7px;border-right:2px solid var(--suave);border-bottom:2px solid var(--suave);transform:rotate(45deg) translate(-2px,-2px);margin-left:2px}
+.legenda.aberta .leg-seta{display:none}
+.legenda.aberta .leg-fechar{display:inline-flex;margin-left:auto;background:var(--painel-2);border:1px solid var(--linha-2);border-radius:14px;padding:4px 10px;font-size:12px;color:var(--texto)}
+.leg-botao:hover .leg-fechar{border-color:var(--suave)}
+
 
 /* Atalho para os boletins de urna na ficha do local */
 .ir-urnas{display:flex;align-items:center;gap:8px;width:100%;margin:12px 0 0;background:var(--acento-fundo);border:1px solid rgba(242,179,61,.35);color:var(--acento);
@@ -1698,6 +1694,7 @@ function atualizarLegenda(){
 $('#colorir').addEventListener('change',e=>{const v=e.target.value;if(v.startsWith('cmp:'))CMP.metrica=v.slice(4);else estado.colorir=v;atualizar()});
 function legendaAberta(abrir){const l=$('#legenda');l.classList.toggle('aberta',abrir);$('#leg-botao').setAttribute('aria-expanded',abrir)}
 $('#leg-botao').addEventListener('click',()=>legendaAberta(!$('#legenda').classList.contains('aberta')));
+if(DESKTOP())legendaAberta(true);   // no computador começa aberta; no celular, recolhida
 /* No celular, a legenda aberta cobre o mapa: o primeiro toque fora dela só a fecha */
 document.addEventListener('pointerdown',e=>{
   if(DESKTOP()||!$('#legenda').classList.contains('aberta')||e.target.closest('#legenda'))return;
