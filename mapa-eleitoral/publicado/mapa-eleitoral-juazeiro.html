@@ -944,6 +944,13 @@ details.mais p{margin:4px 8px 0;font-size:12px;color:var(--fraco);line-height:1.
   .legenda.aberta .leg-fechar{display:inline-flex;margin-left:auto;background:var(--painel-2);border:1px solid var(--linha-2);border-radius:14px;padding:4px 10px;font-size:12px;color:var(--texto)}
 }
 
+/* Atalho para os boletins de urna na ficha do local */
+.ir-urnas{display:flex;align-items:center;gap:8px;width:100%;margin:12px 0 0;background:var(--acento-fundo);border:1px solid rgba(242,179,61,.35);color:var(--acento);
+  border-radius:var(--raio);padding:10px 12px;font-weight:600;font-size:14px}
+.ir-urnas b{background:var(--acento);color:#0b0e13;border-radius:10px;padding:0 7px;font-size:12px}
+.ir-urnas span{margin-left:auto;font-size:16px}
+.ir-urnas:hover{background:rgba(242,179,61,.2)}
+
 </style>
 <header class="topo">
   <div class="marca"><span>Juazeiro · BA</span><h1>Mapa Eleitoral</h1></div>
@@ -1517,6 +1524,8 @@ function htmlLocal(lid){
   let h='';
   if(l.b&&BAIRRO[l.b]&&semAcento(BAIRRO[l.b].nome)!==semAcento(l.bt.replace(/^(DISTRITO|POVOADO) /,'')))
     h+=`<p class="nota" style="margin:12px 0 0">No cadastro do TSE, o bairro deste local é <b>${esc(l.bt)}</b>. No mapa, ele está dentro de ${esc(BAIRRO[l.b].nome)}.</p>`;
+  const secoes=R.secoesPorLocal[lid]||[];
+  h+=`<button class="ir-urnas" data-ir-urnas>Ver boletins de urna <b>${secoes.length}</b><span aria-hidden="true">↓</span></button>`;
   h+=`<div class="bloco">${kpis(T)}</div>`;
   if(isVereador()){
     if(estado.candidato)h+=`<div class="bloco">${fichaCandidato(estado.candidato,T,'neste local')}</div>`;
@@ -1524,8 +1533,7 @@ function htmlLocal(lid){
   }else{
     h+=`<div class="bloco"><p class="bloco-tit"><span>Resultado no local</span></p>${linhasCandidatos(T,R.cidade)}</div>`;
   }
-  const secoes=R.secoesPorLocal[lid]||[];
-  h+=`<div class="bloco"><p class="bloco-tit"><span>Boletins de urna</span><small>${secoes.length} urna(s) · toque para abrir</small></p>
+  h+=`<div class="bloco" id="boletins"><p class="bloco-tit"><span>Boletins de urna</span><small>${secoes.length} urna(s) · toque para abrir</small></p>
     ${secoes.map(sk=>htmlUrna(sk,E.secoes[sk],l)).join('')}</div>`;
   return h;
 }
@@ -1646,6 +1654,7 @@ $('#painel').addEventListener('click',e=>{
   if(t.dataset.local)return irLocal(t.dataset.local);
   if(t.dataset.candidato){clearTimeout(timerBusca);$('#painel').classList.remove('buscando');escolherCandidato(t.dataset.candidato);return}
   if('limpar' in t.dataset){estado.candidato=null;atualizar();return}
+  if('irUrnas' in t.dataset){const alvo=$('#boletins');if(alvo){folha('cima');alvo.scrollIntoView({behavior:MOVIMENTO?'smooth':'auto',block:'start'})}return}
   if('verTodos' in t.dataset){estado.verTodos=!estado.verTodos;atualizar();return}
   if('verEleitos' in t.dataset){estado.verEleitos=!estado.verEleitos;atualizar();return}
   if(t.dataset.ordem){estado.ordemBairros=t.dataset.ordem;atualizar();return}
@@ -1973,7 +1982,19 @@ function htmlCompararLocal(lid){
   else if(!p.b.existe)aviso=`Este local não existe em ${esc(D.indice[CMP.b.el].titulo)}.`;
   return `${aviso?`<p class="nota" style="margin:12px 0 0">${aviso}</p>`:''}
     <div class="bloco"><p class="bloco-tit"><span>Neste local</span>${cmpMetricas()}</p>${cmpResumo('locais',lid)}</div>
-    <div class="bloco"><p class="nota">Para ver os boletins de urna deste local, volte para <b>Resultados</b> e escolha a eleição no topo.</p></div>`;
+    ${cmpBoletins('a',lid)}${cmpBoletins('b',lid)}`;
+}
+/* Boletins de urna de cada lado da comparação; o candidato do lado aparece destacado em cada urna */
+function cmpBoletins(s,lid){
+  const ch=CMP[s].el,R=agregados(ch),secoes=R.secoesPorLocal[lid]||[],l=R.L[lid];
+  const cab=`<p class="bloco-tit"><span style="color:${s==='a'?COR_A:COR_B}">Boletins · ${esc(D.indice[ch].titulo)}</span><small>${secoes.length} urna(s)</small></p>`;
+  if(!secoes.length||!l)return `<div class="bloco">${cab}<p class="nota">Este local não teve urnas nesta eleição.</p></div>`;
+  // htmlUrna lê a eleição e o candidato do estado; troca temporariamente para o lado s
+  const antes={eleicao:estado.eleicao,candidato:estado.candidato};
+  try{
+    estado.eleicao=ch;estado.candidato=CMP[s].n;
+    return `<div class="bloco">${cab}${secoes.map(sk=>htmlUrna(sk,R.E.secoes[sk],l)).join('')}</div>`;
+  }finally{estado.eleicao=antes.eleicao;estado.candidato=antes.candidato}
 }
 function abasModo(){
   return `<div class="abas" role="tablist">

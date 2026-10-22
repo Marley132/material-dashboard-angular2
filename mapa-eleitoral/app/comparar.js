@@ -194,7 +194,19 @@ function htmlCompararLocal(lid){
   else if(!p.b.existe)aviso=`Este local não existe em ${esc(D.indice[CMP.b.el].titulo)}.`;
   return `${aviso?`<p class="nota" style="margin:12px 0 0">${aviso}</p>`:''}
     <div class="bloco"><p class="bloco-tit"><span>Neste local</span>${cmpMetricas()}</p>${cmpResumo('locais',lid)}</div>
-    <div class="bloco"><p class="nota">Para ver os boletins de urna deste local, volte para <b>Resultados</b> e escolha a eleição no topo.</p></div>`;
+    ${cmpBoletins('a',lid)}${cmpBoletins('b',lid)}`;
+}
+/* Boletins de urna de cada lado da comparação; o candidato do lado aparece destacado em cada urna */
+function cmpBoletins(s,lid){
+  const ch=CMP[s].el,R=agregados(ch),secoes=R.secoesPorLocal[lid]||[],l=R.L[lid];
+  const cab=`<p class="bloco-tit"><span style="color:${s==='a'?COR_A:COR_B}">Boletins · ${esc(D.indice[ch].titulo)}</span><small>${secoes.length} urna(s)</small></p>`;
+  if(!secoes.length||!l)return `<div class="bloco">${cab}<p class="nota">Este local não teve urnas nesta eleição.</p></div>`;
+  // htmlUrna lê a eleição e o candidato do estado; troca temporariamente para o lado s
+  const antes={eleicao:estado.eleicao,candidato:estado.candidato};
+  try{
+    estado.eleicao=ch;estado.candidato=CMP[s].n;
+    return `<div class="bloco">${cab}${secoes.map(sk=>htmlUrna(sk,R.E.secoes[sk],l)).join('')}</div>`;
+  }finally{estado.eleicao=antes.eleicao;estado.candidato=antes.candidato}
 }
 function abasModo(){
   return `<div class="abas" role="tablist">

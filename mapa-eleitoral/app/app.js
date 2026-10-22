@@ -436,6 +436,8 @@ function htmlLocal(lid){
   let h='';
   if(l.b&&BAIRRO[l.b]&&semAcento(BAIRRO[l.b].nome)!==semAcento(l.bt.replace(/^(DISTRITO|POVOADO) /,'')))
     h+=`<p class="nota" style="margin:12px 0 0">No cadastro do TSE, o bairro deste local é <b>${esc(l.bt)}</b>. No mapa, ele está dentro de ${esc(BAIRRO[l.b].nome)}.</p>`;
+  const secoes=R.secoesPorLocal[lid]||[];
+  h+=`<button class="ir-urnas" data-ir-urnas>Ver boletins de urna <b>${secoes.length}</b><span aria-hidden="true">↓</span></button>`;
   h+=`<div class="bloco">${kpis(T)}</div>`;
   if(isVereador()){
     if(estado.candidato)h+=`<div class="bloco">${fichaCandidato(estado.candidato,T,'neste local')}</div>`;
@@ -443,8 +445,7 @@ function htmlLocal(lid){
   }else{
     h+=`<div class="bloco"><p class="bloco-tit"><span>Resultado no local</span></p>${linhasCandidatos(T,R.cidade)}</div>`;
   }
-  const secoes=R.secoesPorLocal[lid]||[];
-  h+=`<div class="bloco"><p class="bloco-tit"><span>Boletins de urna</span><small>${secoes.length} urna(s) · toque para abrir</small></p>
+  h+=`<div class="bloco" id="boletins"><p class="bloco-tit"><span>Boletins de urna</span><small>${secoes.length} urna(s) · toque para abrir</small></p>
     ${secoes.map(sk=>htmlUrna(sk,E.secoes[sk],l)).join('')}</div>`;
   return h;
 }
@@ -565,6 +566,7 @@ $('#painel').addEventListener('click',e=>{
   if(t.dataset.local)return irLocal(t.dataset.local);
   if(t.dataset.candidato){clearTimeout(timerBusca);$('#painel').classList.remove('buscando');escolherCandidato(t.dataset.candidato);return}
   if('limpar' in t.dataset){estado.candidato=null;atualizar();return}
+  if('irUrnas' in t.dataset){const alvo=$('#boletins');if(alvo){folha('cima');alvo.scrollIntoView({behavior:MOVIMENTO?'smooth':'auto',block:'start'})}return}
   if('verTodos' in t.dataset){estado.verTodos=!estado.verTodos;atualizar();return}
   if('verEleitos' in t.dataset){estado.verEleitos=!estado.verEleitos;atualizar();return}
   if(t.dataset.ordem){estado.ordemBairros=t.dataset.ordem;atualizar();return}

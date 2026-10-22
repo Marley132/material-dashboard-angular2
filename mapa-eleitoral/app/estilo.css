@@ -271,3 +271,10 @@ details.mais p{margin:4px 8px 0;font-size:12px;color:var(--fraco);line-height:1.
   .legenda.aberta .leg-seta{display:none}
   .legenda.aberta .leg-fechar{display:inline-flex;margin-left:auto;background:var(--painel-2);border:1px solid var(--linha-2);border-radius:14px;padding:4px 10px;font-size:12px;color:var(--texto)}
 }
+
+/* Atalho para os boletins de urna na ficha do local */
+.ir-urnas{display:flex;align-items:center;gap:8px;width:100%;margin:12px 0 0;background:var(--acento-fundo);border:1px solid rgba(242,179,61,.35);color:var(--acento);
+  border-radius:var(--raio);padding:10px 12px;font-weight:600;font-size:14px}
+.ir-urnas b{background:var(--acento);color:#0b0e13;border-radius:10px;padding:0 7px;font-size:12px}
+.ir-urnas span{margin-left:auto;font-size:16px}
+.ir-urnas:hover{background:rgba(242,179,61,.2)}
