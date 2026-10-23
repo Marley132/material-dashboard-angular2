@@ -18,11 +18,18 @@ const PALETA_EXTRA=['#22b8cf','#e879a6','#f5a524','#c9a27e','#7dd3fc','#9aa5b8',
 /* ══════════════════════════════════════════════════════════
    Estado
 ══════════════════════════════════════════════════════════ */
-const estado={modo:'eleicao',verEleitos:false,eleicao:'2024_PREFEITO',nivel:'cidade',bairro:null,local:null,candidato:null,colorir:'vencedor',
+const estado={vista:'bairros',modo:'eleicao',verEleitos:false,eleicao:'2024_PREFEITO',nivel:'cidade',bairro:null,local:null,candidato:null,colorir:'vencedor',
   ordemBairros:'votos',verTodos:false,camadaBairros:true,camadaLocais:true};
 let D=null;                    // dados.json
 const cache={};                // agregados por eleição
-const BAIRRO={};               // id -> bairro
+const BAIRRO={};               // id -> bairro ou região (regiões têm id 'R:...')
+const REGIAO_DE={};            // id do bairro -> id da região
+/* Unidade de área em uso: bairros, ou regiões (vista "Regiões" e "Mancha") */
+const usaRegioes=()=>estado.vista!=='bairros';
+const ehRegiao=id=>typeof id==='string'&&id.startsWith('R:');
+const ativa=id=>ehRegiao(id)===usaRegioes();
+const areaDe=l=>l&&l.b?(usaRegioes()?REGIAO_DE[l.b]||null:l.b):null;
+const areasAtivas=R=>Object.entries(R.bairros).filter(([id])=>ativa(id));
 
 /* ══════════════════════════════════════════════════════════
    Agregação: urna -> local -> bairro -> cidade
@@ -42,6 +49,8 @@ function agregados(chave){
     acumular(R.locais[lid]||(R.locais[lid]=novoTotal()),s,lid);
     (R.secoesPorLocal[lid]||(R.secoesPorLocal[lid]=[])).push(sk);
     if(l&&l.b)acumular(R.bairros[l.b]||(R.bairros[l.b]=novoTotal()),s,lid);
+    const rg=l&&l.b&&REGIAO_DE[l.b];   // a mesma urna também soma na região do bairro
+    if(rg)acumular(R.bairros[rg]||(R.bairros[rg]=novoTotal()),s,lid);
   }
   for(const k in R.secoesPorLocal)R.secoesPorLocal[k].sort((a,b)=>+a.split('-')[1]-+b.split('-')[1]);
   // cores: as definidas nos dados; os demais candidatos majoritários recebem tons da paleta auxiliar
@@ -88,7 +97,10 @@ const camadas={bairros:{},locais:{},rotulos:L.layerGroup(),contorno:null};
 function montarMapa(){
   camadas.contorno=L.polygon(D.municipio.map(p=>p.map(r=>decodificar(r))),
     {pane:'contorno',color:'#f2b33d',weight:1.6,opacity:.55,dashArray:'6 5',fill:false,interactive:false}).addTo(map);
-  for(const b of D.bairros){
+  for(const r of D.regioes||[])for(const b of r.bairros)REGIAO_DE[b]=r.id;
+  // regiões de um só distrito/povoado já têm o contorno e o nome do próprio distrito
+  const areas=[...D.bairros,...(D.regioes||[]).map(r=>({...r,rotulo:r.tipo==='região'}))];
+  for(const b of areas){
     BAIRRO[b.id]=b;
     if(b.geo){
       const lay=L.polygon(b.geo.map(p=>p.map(r=>decodificar(r))),{pane:'bairros',weight:1,smoothFactor:.5});
@@ -102,9 +114,11 @@ function montarMapa(){
       }
       lay.addTo(map);camadas.bairros[b.id]=lay;
     }
-    const cls=b.tipo==='bairro'?'rotulo-bairro':'rotulo-distrito';
+    if(ehRegiao(b.id)&&!b.rotulo)continue;
+    const cls=b.tipo==='bairro'?'rotulo-bairro':b.tipo==='região'?'rotulo-regiao':'rotulo-distrito';
     const m=L.marker([b.c[1],b.c[0]],{pane:'rotulos',interactive:false,keyboard:false,
-      icon:L.divIcon({className:'rotulo '+cls,html:`<span>${esc(b.nome)}</span>`,iconSize:null})});
+      // região: no mapa só o primeiro nome (o completo fica no painel), para não encavalar no centro
+      icon:L.divIcon({className:'rotulo '+cls,html:`<span>${esc(b.tipo==='região'?b.nome.split(' · ')[0]:b.nome)}</span>`,iconSize:null})});
     m.tipo=b.tipo;m.addTo(camadas.rotulos);
   }
   camadas.rotulos.addTo(map);
@@ -114,13 +128,21 @@ function montarMapa(){
 function atualizarRotulos(){
   const z=map.getZoom();
   camadas.rotulos.eachLayer(m=>{
-    const ver=m.tipo==='bairro'?z>=14:(z>=10&&z<=14);
+    const ver=m.tipo==='bairro'?(!usaRegioes()&&z>=14):m.tipo==='região'?(usaRegioes()&&z>=13&&z<=15):(z>=10&&z<=14);
     const el=m.getElement();if(el)el.style.display=ver?'':'none';
   });
 }
 
 /* Escala de cor por intensidade (0..1), sobre a cor do candidato */
 function estiloBairro(id){
+  if(!ativa(id))return {stroke:false,fill:false};
+  const s=estiloArea(id);
+  // na vista "Mancha" a cor vem do mapa de calor; a região fica só com o contorno (e continua clicável)
+  if(estado.vista==='calor'&&s.fill!==false&&estado.bairro!==id)return {...s,color:'#c9d1d9',weight:1.4,opacity:.5,dashArray:null,fillOpacity:0};
+  if(estado.vista==='calor'&&estado.bairro===id)return {...s,fillOpacity:0};
+  return s;
+}
+function estiloArea(id){
   if(modoComparar())return cmpPronto()?estiloComparar(id):{color:'#6b7486',weight:.8,opacity:.5,dashArray:null,fill:false};
   const R=agregados(estado.eleicao),T=R.bairros[id],sel=estado.bairro===id,algumSel=!!estado.bairro;
   if(!estado.camadaBairros)return {stroke:false,fill:false};
@@ -147,11 +169,11 @@ function modoCor(){
   if(isVereador())c=estado.candidato?'cand:'+estado.candidato:'comparecimento';
   if(c.startsWith('cand:')){
     const n=c.slice(5);
-    const max=Math.max(...Object.values(R.bairros).map(T=>partePct(T,n)),0.1);
+    const max=Math.max(...areasAtivas(R).map(([,T])=>partePct(T,n)),0.1);
     return {tipo:'candidato',n,cor:corCand(n),max};
   }
   if(c==='comparecimento'){
-    const ts=Object.values(R.bairros).map(T=>T.c/T.a*100);
+    const ts=areasAtivas(R).map(([,T])=>T.c/T.a*100);
     return {tipo:'comparecimento',min:Math.min(...ts),max:Math.max(...ts)};
   }
   return {tipo:'vencedor'};
@@ -168,7 +190,7 @@ function desenharLocais(){
   const mx=Math.max(...Object.values(R.locais).map(valor),1);
   for(const [lid,T] of Object.entries(R.locais)){
     const l=R.L[lid];if(!l||!l.p)continue;
-    const v=valor(T),sel=estado.local===lid,foraDoBairro=estado.bairro&&l.b!==estado.bairro;
+    const v=valor(T),sel=estado.local===lid,foraDoBairro=estado.bairro&&areaDe(l)!==estado.bairro;
     let cor;
     if(m.tipo==='candidato')cor=v>0?m.cor:'#4a5263';
     else if(m.tipo==='comparecimento')cor='#22b8cf';
@@ -186,7 +208,7 @@ function desenharLocais(){
 function dicaBairro(id){
   if(modoComparar())return cmpPronto()?cmpDica(BAIRRO[id].nome,cmpPar('bairros',id)):esc(BAIRRO[id].nome);
   const R=agregados(estado.eleicao),T=R.bairros[id],b=BAIRRO[id];
-  if(!T)return `<b>${esc(b.nome)}</b><br><span class="x">Sem local de votação</span>`;
+  if(!T)return `<b>${esc(b.nome)}</b><br><span class="x">Nenhum colégio fica neste bairro</span>`;
   const m=modoCor();
   if(m.tipo==='candidato')return `<b>${esc(b.nome)}</b><br>${esc(cand(m.n).u)}: <b>${fmt(T.v[m.n]||0)}</b> votos (${pct(partePct(T,m.n))})`;
   if(m.tipo==='comparecimento')return `<b>${esc(b.nome)}</b><br>Comparecimento: <b>${pct(T.c/T.a*100)}</b>`;
@@ -250,7 +272,7 @@ function irBairro(id,{mover=true,historico=true}={}){
 function irLocal(lid){
   const l=infoLocal(lid);if(!l)return;
   if(estado.nivel!=='local')empurrar();
-  estado.nivel='local';estado.local=lid;estado.bairro=l.b||null;
+  estado.nivel='local';estado.local=lid;estado.bairro=areaDe(l);
   atualizar();folha('meio');
   if(l.p)focarPonto(L.latLng(l.p[1],l.p[0]),Math.max(map.getZoom(),16));
 }
@@ -354,7 +376,7 @@ function votosPorPartido(){
 /* Lista de bairros com ordenação */
 function listaBairros(){
   const R=agregados(estado.eleicao),E=R.E,m=modoCor();
-  const ids=Object.keys(R.bairros);
+  const ids=Object.keys(R.bairros).filter(ativa);
   const chave={
     votos:id=>-R.bairros[id].c,
     vantagem:id=>{const v=vencedor(R.bairros[id],E);return -(v?v.margem:0)},
@@ -365,8 +387,8 @@ function listaBairros(){
   let ord=estado.ordemBairros;if(ord==='candidato'&&m.tipo!=='candidato')ord='votos';
   ids.sort((a,b)=>{const x=chave[ord](a),y=chave[ord](b);return typeof x==='string'?x.localeCompare(y):x-y});
   const opcoes=[['votos','Votantes'],...(m.tipo==='candidato'?[['candidato','% do candidato']]:isVereador()?[]:[['vantagem','Vantagem']]),['comparecimento','Comparec.'],['nome','A–Z']];
-  const semDados=D.bairros.filter(b=>!R.bairros[b.id]&&b.geo).map(b=>b.nome).sort();
-  return `<div class="bloco"><p class="bloco-tit"><span>Bairros e distritos <small>${ids.length}</small></span>
+  const semDados=usaRegioes()?[]:D.bairros.filter(b=>!R.bairros[b.id]&&b.geo).map(b=>b.nome).sort();
+  return `<div class="bloco"><p class="bloco-tit"><span>${usaRegioes()?'Por região':'Por bairro do colégio'} <small>${ids.length}</small></span>
     <span class="ordem" role="group" aria-label="Ordenar bairros">${opcoes.map(([k,t])=>`<button data-ordem="${k}" aria-pressed="${ord===k}">${t}</button>`).join('')}</span></p>
     <div class="itens">${ids.map(id=>{
       const T=R.bairros[id],b=BAIRRO[id];let dir,barra;
@@ -375,7 +397,8 @@ function listaBairros(){
       else{const v=vencedor(T,E);dir=`<b style="color:${corCand(v.n)}">${esc(cand(v.n).u)}</b> ${pct(v.p)}`;barra=barraEmpilhada(T,E)}
       return `<button class="item" data-bairro="${esc(id)}"><span class="t">${esc(b.nome)}${b.tipo!=='bairro'?`<small>${b.tipo}</small>`:''}</span><span class="v">${dir}</span>${barra}</button>`;
     }).join('')}</div>
-    ${semDados.length?`<details class="mais"><summary>${semDados.length} bairros sem local de votação ▾</summary><p>${semDados.map(esc).join(' · ')}</p></details>`:''}
+    <p class="nota" style="margin:8px 2px 0">${usaRegioes()?'Cada região soma os colégios dos bairros que a formam; reduz o efeito de quem mora num bairro e vota em outro.':'Votos contados no bairro onde fica o colégio. O eleitor pode morar em outro bairro.'}</p>
+    ${semDados.length?`<details class="mais"><summary>${semDados.length} bairros sem colégio eleitoral ▾</summary><p>${semDados.map(esc).join(' · ')}</p></details>`:''}
   </div>`;
 }
 
@@ -394,29 +417,33 @@ function htmlCidade(){
   }
   h+=listaBairros();
   h+=`<div class="bloco"><p class="nota"><b>Fontes:</b> TSE, dados abertos de votação por seção e cadastro de locais de votação; contornos de bairros do OpenStreetMap (via Overture Maps).
-    <b>Como ler:</b> cada local de votação é contado no bairro onde o prédio fica, não onde o eleitor mora. Percentuais sobre votos válidos.</p></div>`;
+    <b>Como ler:</b> cada colégio é contado no bairro onde o prédio fica, não onde o eleitor mora; muita gente vota em colégio de bairro vizinho. Percentuais sobre votos válidos.</p></div>`;
   return h;
 }
 function topBairrosCandidato(n){
   const R=agregados(estado.eleicao);
-  const lista=Object.entries(R.bairros).map(([id,T])=>[id,T.v[n]||0,partePct(T,n)]).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const lista=areasAtivas(R).map(([id,T])=>[id,T.v[n]||0,partePct(T,n)]).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]).slice(0,6);
   if(!lista.length)return '';
   const max=lista[0][1];
   return `<div class="bloco"><p class="bloco-tit"><span>Onde teve mais votos</span></p><div class="itens">${lista.map(([id,q,p])=>`<button class="item" data-bairro="${esc(id)}">
-    <span class="t">${esc(BAIRRO[id].nome)}</span><span class="v"><b>${fmt(q)}</b> · ${pct(p)} do bairro</span>
+    <span class="t">${esc(BAIRRO[id].nome)}</span><span class="v"><b>${fmt(q)}</b> · ${pct(p)} ${ehRegiao(id)?'da região':'nos colégios do bairro'}</span>
     <span class="empilhada"><i style="width:${q/max*100}%;background:var(--acento)"></i></span></button>`).join('')}</div></div>`;
 }
 
 function htmlBairro(id){
   const R=agregados(estado.eleicao),E=R.E,T=R.bairros[id],b=BAIRRO[id];
-  if(!T)return `<div class="bloco"><p class="vazio">Nenhum local de votação fica dentro deste ${b.tipo}. Quem mora aqui vota em colégios de bairros vizinhos, que aparecem como pontos no mapa.</p></div>`;
-  let h=`<div class="bloco">${kpis(T)}</div>`;
+  if(!T)return `<div class="bloco"><p class="vazio">Nenhum colégio eleitoral fica dentro deste ${b.tipo}. Quem mora aqui vota em colégios de bairros vizinhos, que aparecem como pontos no mapa.${REGIAO_DE[id]&&VARIANTE==='lab'?` Veja a região <b>${esc(BAIRRO[REGIAO_DE[id]].nome)}</b> na opção “Regiões” da legenda.`:''}</p></div>`;
+  const onde=ehRegiao(id)?'na região':b.tipo==='bairro'?'nos colégios do bairro':`no ${b.tipo}`;
+  let h='';
+  if(ehRegiao(id)&&b.bairros.length>1)h+=`<p class="nota" style="margin:12px 0 0">Bairros desta região: ${b.bairros.map(x=>esc(BAIRRO[x]?.nome||x)).join(', ')}.</p>`;
+  else if(b.tipo==='bairro')h+=`<p class="nota" style="margin:12px 0 0">Números dos colégios que ficam neste bairro. Parte dos eleitores mora em bairros vizinhos.</p>`;
+  h+=`<div class="bloco">${kpis(T)}</div>`;
   if(isVereador()){
-    if(estado.candidato)h+=`<div class="bloco">${fichaCandidato(estado.candidato,T,'no bairro')}</div>`;
+    if(estado.candidato)h+=`<div class="bloco">${fichaCandidato(estado.candidato,T,onde)}</div>`;
     else h+=`<div class="bloco">${blocoBuscaVereador()}</div>`;
-    h+=`<div class="bloco"><p class="bloco-tit"><span>Mais votados no ${b.tipo}</span></p>${maisVotadosVereador(T)}</div>`;
+    h+=`<div class="bloco"><p class="bloco-tit"><span>Mais votados ${onde}</span></p>${maisVotadosVereador(T)}</div>`;
   }else{
-    h+=`<div class="bloco"><p class="bloco-tit"><span>Resultado no ${b.tipo}</span></p>${linhasCandidatos(T,R.cidade)}</div>`;
+    h+=`<div class="bloco"><p class="bloco-tit"><span>Resultado ${onde}</span></p>${linhasCandidatos(T,R.cidade)}</div>`;
   }
   const locais=[...T.locais].sort((a,b)=>R.locais[b].c-R.locais[a].c);
   const maxCand=estado.candidato?Math.max(...locais.map(x=>partePct(R.locais[x],estado.candidato)),.1):1;
@@ -489,7 +516,7 @@ function cabecalho(){
     sub=`${fmt(R.cidade.urnas)} urnas em ${R.cidade.locais.size} locais de votação`;
   }else if(estado.nivel==='bairro'){
     const b=BAIRRO[estado.bairro],T=R.bairros[estado.bairro];
-    sobre=b.tipo==='bairro'?'Bairro':b.tipo==='distrito'?'Distrito':'Povoado';tit=b.nome;
+    sobre=b.tipo==='bairro'?'Colégios no bairro':b.tipo==='região'?'Região':b.tipo==='distrito'?'Distrito':'Povoado';tit=b.nome;
     sub=T?`${T.locais.size} local(is) · ${T.urnas} urnas · ${E.titulo}`:E.titulo;
   }else{
     const l=R.L[estado.local],T=R.locais[estado.local];
@@ -520,6 +547,7 @@ function atualizar(){
   estilizarBairros();desenharLocais();atualizarLegenda();
   $('#chip-inicio').hidden=estado.nivel==='cidade';
   $('#eleicao').classList.toggle('inativo',modoComparar());
+  if(typeof atualizarLab==='function')atualizarLab();   // só existe na versão Laboratório
 }
 
 /* Busca de vereador */

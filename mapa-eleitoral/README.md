@@ -26,3 +26,15 @@ Página única com os resultados eleitorais de Juazeiro por bairro, local de vot
 Os 151 contornos de bairros do OpenStreetMap se sobrepõem. `build_dados.py` monta uma divisão sem sobreposição
 (do menor para o maior) e conta cada local de votação no bairro onde o prédio fica. Locais sem contorno viram povoados
 com o nome do cadastro do TSE. Locais sem coordenada num ano usam a do mesmo código de local em outro ano.
+
+## Regiões e mapa de calor (Laboratório)
+
+O TSE informa onde o eleitor vota, não onde mora. Para reduzir o efeito de quem mora num bairro e vota em
+outro, o Laboratório oferece "Ver por: Bairros | Regiões | Mancha".
+
+- **Regiões** (`build_dados.py`, `regioes` em `dados.json`): bairros vizinhos agrupados até ~9 mil eleitores.
+  Começa juntando bairros ligados pelo próprio TSE (colégio que fica no bairro X mas é registrado no bairro Y,
+  como o Colégio Modelo, em Castelo Branco, registrado como João XXIII) e os vínculos informados pela equipe
+  (`VINCULOS_EQUIPE`, hoje Quidé–Palmares II). Distritos e povoados formam regiões próprias.
+- **Mancha** (`app/lab.js`): cada colégio espalha sua votação ao redor (raio conforme o zoom, ~550 m de perto),
+  recortada pelo limite do município. A cor mostra a tendência da área, não a moradia dos eleitores.

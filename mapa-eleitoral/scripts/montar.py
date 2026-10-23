@@ -7,7 +7,7 @@ import sys
 S=sys.argv[1]; variante=sys.argv[2] if len(sys.argv)>2 else 'principal'
 A=S+'/app/'
 r=lambda f:open(f,encoding='utf-8').read()
-app=r(A+'app.js')+'\n'+r(A+'comparar.js')
+app=f"const VARIANTE='{variante}';\n"+r(A+'app.js')+'\n'+r(A+'comparar.js')
 base=r(A+'basemap.js').replace('decodificar(','decodificarBase(')
 k="function decodificar(arr"
 assert app.count(k)==1

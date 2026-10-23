@@ -24,7 +24,8 @@ function cmpPar(nivel,id){
   return {a,b,pa,pb,razao:a.v?b.v/a.v:(b.v?Infinity:null),dif:b.v-a.v,pp:pb-pa};
 }
 function cmpUnidades(nivel){
-  return [...new Set([...Object.keys(agregados(CMP.a.el)[nivel]),...Object.keys(agregados(CMP.b.el)[nivel])])];
+  const ids=[...new Set([...Object.keys(agregados(CMP.a.el)[nivel]),...Object.keys(agregados(CMP.b.el)[nivel])])];
+  return nivel==='bairros'?ids.filter(ativa):ids;   // só bairros ou só regiões, conforme a vista
 }
 function cmpCalcularEscalas(){
   for(const nivel of ['bairros','locais']){
@@ -71,7 +72,7 @@ function desenharLocaisComparar(){
   const mx=Math.max(...pares.map(([,p])=>Math.max(p.a.v,p.b.v)),1);
   for(const [lid,p] of pares){
     const l=infoLocal(lid);if(!l||!l.p)continue;
-    const v=Math.max(p.a.v,p.b.v),t=cmpIntensidade(p,'locais'),sel=estado.local===lid,fora=estado.bairro&&l.b!==estado.bairro;
+    const v=Math.max(p.a.v,p.b.v),t=cmpIntensidade(p,'locais'),sel=estado.local===lid,fora=estado.bairro&&areaDe(l)!==estado.bairro;
     const c=L.circleMarker([l.p[1],l.p[0]],{pane:'locais',radius:v>0?Math.max(4,Math.sqrt(v/mx)*17):3.5,
       color:sel?'#fff':'#0b0e13',weight:sel?3:1.4,fillColor:cmpCor(t),fillOpacity:fora?.35:.95,opacity:fora?.5:1});
     c.on('click',e=>{L.DomEvent.stopPropagation(e);irLocal(lid)});
@@ -178,15 +179,15 @@ function htmlCompararCidade(){
   if(!cmpPronto())return h+`<div class="bloco"><p class="vazio">Escolha a eleição e o candidato de cada lado. Vale comparar cargos diferentes, como um vereador de 2024 com um deputado de 2026 do mesmo grupo político.</p></div>`;
   h+=`<div class="bloco"><p class="bloco-tit"><span>Juazeiro inteira</span>${cmpMetricas()}</p>${cmpResumo('cidade')}</div>`;
   h+=cmpDispersao(cmpUnidades('locais'));
-  h+=cmpLinhas('bairros',cmpUnidades('bairros'),{titulo:'Bairros e distritos',destino:'bairro'});
+  h+=cmpLinhas('bairros',cmpUnidades('bairros'),{titulo:usaRegioes()?'Por região':'Por bairro do colégio',destino:'bairro'});
   h+=`<div class="bloco"><p class="nota"><b>Como ler:</b> <b>retenção</b> é quantos votos B teve para cada 100 de A (acima de 100% = B foi melhor). <b>Diferença</b> mostra onde está o volume de votos ganho ou perdido. <b>% dos válidos</b> desconta o tamanho do eleitorado e do comparecimento de cada ano. A comparação é feita por local de votação, que mantém o mesmo código entre as eleições. Na ficha de cada colégio dá para comparar urna a urna, pelo número da seção; a urna avisa quando o eleitorado dela mudou muito entre as eleições.</p></div>`;
   return h;
 }
 function htmlCompararBairro(id){
   const p=cmpPar('bairros',id);
-  if(!p.a.existe&&!p.b.existe)return `<div class="bloco"><p class="vazio">Nenhum local de votação fica dentro deste ${BAIRRO[id].tipo}.</p></div>`;
+  if(!p.a.existe&&!p.b.existe)return `<div class="bloco"><p class="vazio">Nenhum colégio eleitoral fica dentro deste ${BAIRRO[id].tipo}.</p></div>`;
   const ids=[...new Set([...(agregados(CMP.a.el).bairros[id]?.locais||[]),...(agregados(CMP.b.el).bairros[id]?.locais||[])])];
-  return `<div class="bloco"><p class="bloco-tit"><span>No ${BAIRRO[id].tipo}</span>${cmpMetricas()}</p>${cmpResumo('bairros',id)}</div>`
+  return `<div class="bloco"><p class="bloco-tit"><span>${ehRegiao(id)?'Na região':BAIRRO[id].tipo==='bairro'?'Nos colégios do bairro':'No '+BAIRRO[id].tipo}</span>${cmpMetricas()}</p>${cmpResumo('bairros',id)}</div>`
     +cmpLinhas('locais',ids,{titulo:'Locais de votação',destino:'local'});
 }
 function htmlCompararLocal(lid){
@@ -278,7 +279,7 @@ function cabecalhoComparar(){
   const dupla=pronto?`${cmpCand('a').u} × ${cmpCand('b').u}`:'Comparar candidatos';
   const eleicoes=`${D.indice[CMP.a.el].titulo} × ${D.indice[CMP.b.el].titulo}`;
   if(estado.nivel==='cidade')return {sobre:'Comparação entre eleições',tit:dupla,sub:eleicoes};
-  if(estado.nivel==='bairro'){const b=BAIRRO[estado.bairro];return {sobre:b.tipo==='bairro'?'Bairro':b.tipo==='distrito'?'Distrito':'Povoado',tit:b.nome,sub:dupla}}
+  if(estado.nivel==='bairro'){const b=BAIRRO[estado.bairro];return {sobre:b.tipo==='bairro'?'Colégios no bairro':b.tipo==='região'?'Região':b.tipo==='distrito'?'Distrito':'Povoado',tit:b.nome,sub:dupla}}
   const l=infoLocal(estado.local);return {sobre:`Local de votação · Zona ${estado.local.split('-')[0]}`,tit:l.n,sub:dupla};
 }
 function legendaComparar(){

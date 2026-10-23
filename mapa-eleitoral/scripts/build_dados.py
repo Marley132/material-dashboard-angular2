@@ -196,6 +196,69 @@ for k,E in EL.items():
         if s[0] not in anos[E['ano']]['locais']: print('  !! local sem cadastro',s[0])
 loc_com_dados=collections.Counter(anos['2024']['locais'][s[0]]['b'] for s in EL['2024_PREFEITO']['secoes'].values() if anos['2024']['locais'][s[0]]['b'])
 print('bairros com locais 2024:',len(loc_com_dados),'| sem locais:',sum(1 for b in bairros if b['id'] not in loc_com_dados))
+# ── Regiões: bairros vizinhos agrupados para reduzir o efeito "moro num bairro, voto em outro".
+# Junta bairros vizinhos até cada região ter cerca de ALVO eleitores aptos (2024). Bairros sem
+# colégio entram no vizinho com a maior divisa. Distritos e povoados formam regiões próprias.
+ALVO=9000
+peso=collections.Counter()
+for s in EL['2024_PREFEITO']['secoes'].values():
+    b=anos['2024']['locais'][s[0]]['b']
+    if b: peso[b]+=s[1]
+urb={p['k']:p['g'] for p in pecas if p['tipo']=='bairro'}
+grupo={k:{k} for k in urb}; geo={k:g for k,g in urb.items()}; w={k:peso[k] for k in urb}
+def juntar(a,b):
+    ra=next(r for r in grupo if a in grupo[r]); rb=next(r for r in grupo if b in grupo[r])
+    if ra==rb: return
+    grupo[ra]|=grupo.pop(rb); geo[ra]=unary_union([geo[ra],geo.pop(rb)]).buffer(0); w[ra]+=w.pop(rb)
+# 1) Vínculos do próprio TSE: o colégio fica no bairro X, mas o TSE o registra no bairro Y
+#    (ex.: Colégio Modelo fica em Castelo Branco e é registrado como João XXIII) -> X e Y juntos.
+vinculos=set()
+for ano in anos:
+    for l in anos[ano]['locais'].values():
+        y=norm(re.sub(r'^(DISTRITO|POVOADO) ','',l['bt']))
+        if l['b'] in urb and y in urb and y!=l['b']: vinculos.add(tuple(sorted((l['b'],y))))
+# 2) Vínculos informados pela equipe (moradores de um bairro que votam no outro)
+VINCULOS_EQUIPE=[('QUIDE','PALMARES II')]
+for a,b in sorted(vinculos)+VINCULOS_EQUIPE:
+    if a in urb and b in urb: juntar(a,b)
+print('vínculos usados:',sorted(vinculos)+VINCULOS_EQUIPE)
+def vizinhos(r):
+    return [o for o in grupo if o!=r and geo[r].distance(geo[o])<0.0006]
+def divisa(a,b):
+    return geo[a].buffer(0.0003).intersection(geo[b].buffer(0.0003)).area
+while True:
+    pequenos=sorted((r for r in grupo if w[r]<ALVO),key=lambda r:(w[r]>0,w[r]))
+    feito=False
+    for r in pequenos:
+        vz=vizinhos(r)
+        if not vz:
+            vz=[min((o for o in grupo if o!=r),key=lambda o:geo[r].distance(geo[o]))]
+        # sem colégio: vai para o vizinho com a maior divisa. Com colégio: o vizinho menor entre os
+        # que têm divisa relevante (pelo menos 40% da maior), para as regiões ficarem equilibradas e compactas
+        ds={o:divisa(r,o) for o in vz}; m=max(ds.values())
+        if w[r]==0: alvo=max(vz,key=lambda o:ds[o])
+        else: alvo=min((o for o in vz if ds[o]>=0.4*m),key=lambda o:(w[o],-ds[o]))
+        grupo[alvo]|=grupo.pop(r); geo[alvo]=unary_union([geo[alvo],geo.pop(r)]).buffer(0); w[alvo]+=w.pop(r)
+        feito=True; break
+    if not feito: break
+nomeB={p['k']:p['nome'] for p in pecas}; nomeB.update({e['k']:e['nome'] for e in extras.values()})
+regioes=[]
+for r,membros in sorted(grupo.items(),key=lambda x:-w[x[0]]):
+    principais=sorted(membros,key=lambda m:-peso[m])
+    nome=' · '.join(nomeB[m] for m in principais[:2])+(' e entorno' if len(membros)>2 else '')
+    g=geo[r];c=g.representative_point()
+    regioes.append({'id':'R:'+r,'nome':nome,'tipo':'região','bairros':sorted(membros),'geo':enc(g.simplify(0.00004)),
+                    'c':[round(c.x,5),round(c.y,5)],'bb':[round(v,4) for v in g.bounds]})
+for p in pecas:
+    if p['tipo']!='bairro':
+        g=p['g'];c=g.representative_point()
+        regioes.append({'id':'R:'+p['k'],'nome':p['nome'],'tipo':p['tipo'],'bairros':[p['k']],'geo':enc(g.simplify(0.0002)),'c':[round(c.x,5),round(c.y,5)],'bb':[round(v,4) for v in g.bounds]})
+for e in extras.values():
+    b0=next(b for b in bairros if b['id']==e['k'])
+    regioes.append({'id':'R:'+e['k'],'nome':e['nome'],'tipo':'povoado','bairros':[e['k']],'geo':None,'c':b0['c'],'bb':b0['bb']})
+print('regiões:',len(regioes))
+for r in regioes: print(f"   {r['nome'][:60]:60} {r['tipo']:9} {sum(peso[b] for b in r['bairros']):6} aptos · {len(r['bairros'])} bairros")
+
 import os
 os.makedirs(S+'/pub/eleicoes',exist_ok=True)
 indice={}
@@ -204,6 +267,6 @@ for k,E in EL.items():
     open(f"{S}/pub/eleicoes/{k}.json",'w',encoding='utf-8').write(s)
     indice[k]={'titulo':E['titulo'],'ano':E['ano'],'cargo':E['cargo'],'prop':E['prop'],'vagas':E['vagas'],'kb':round(len(s)/1e3)}
 print('arquivos:',{k:v['kb'] for k,v in indice.items()})
-out={'municipio':enc(J.simplify(0.0005)),'bairros':bairros,'anos':anos,'indice':indice}
+out={'municipio':enc(J.simplify(0.0005)),'bairros':bairros,'regioes':regioes,'anos':anos,'indice':indice}
 s=json.dumps(out,ensure_ascii=False,separators=(',',':'))
 open(S+'/pub/dados.json','w',encoding='utf-8').write(s); print('dados.json MB',round(len(s)/1e6,2))
