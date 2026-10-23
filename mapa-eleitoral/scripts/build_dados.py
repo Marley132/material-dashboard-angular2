@@ -78,6 +78,28 @@ for ano,A in anos.items():
                 extras.setdefault(k,{'k':k,'nome':titulo(re.sub(r'^(POVOADO|DISTRITO) ','',l['bt'])),'tipo':'povoado','pts':[]})['pts'].append(l['p']); l['b']=k
 print('povoados sem contorno:',[e['nome'] for e in extras.values()])
 
+# Um local fica no mesmo bairro em todos os anos. A coordenada do TSE às vezes muda alguns metros
+# entre cadastros e cruza a divisa de um bairro (ex.: Escola Cecílio Matos, 2022 Alagadiço x 2026
+# Alto da Maravilha), o que criava ganhos e perdas falsos na comparação entre eleições.
+# Regra: vale o bairro que bate com o nome registrado pelo TSE; senão, o mais frequente; empate, o mais recente.
+porLocal=collections.defaultdict(list)
+for ano in sorted(anos,reverse=True):
+    for lid,l in anos[ano]['locais'].items():
+        if l['b']: porLocal[lid].append((ano,l))
+ajustes=[]
+for lid,lst in porLocal.items():
+    bs=[l['b'] for _,l in lst]
+    if len(set(bs))<=1: continue
+    tse={norm(re.sub(r'^(DISTRITO|POVOADO) ','',l['bt'])) for _,l in lst}
+    cand=[b for b in bs if b in tse]
+    escolhido=cand[0] if cand else collections.Counter(bs).most_common(1)[0][0]
+    ref=next(l for _,l in lst if l['b']==escolhido)
+    for ano,l in lst:
+        if l['b']!=escolhido:
+            ajustes.append((lid,ref['n'],ano,l['b'],escolhido)); l['b']=escolhido; l['p']=ref['p']
+print('locais com bairro unificado entre anos:',len(ajustes))
+for a in ajustes: print('   ',a)
+
 Q=1e5
 def enc(g):
     out=[]
